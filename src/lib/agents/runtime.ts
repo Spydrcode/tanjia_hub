@@ -1,7 +1,7 @@
-import OpenAI from "openai";
+import type OpenAI from "openai";
 import { getOpenAIClient } from "@/src/lib/openai/client";
 
-export type AgentTool = OpenAI.Chat.Completions.ChatCompletionTool;
+export type AgentTool = OpenAI.Beta.Responses.Tool;
 
 export type AgentTrace = {
   model: string;
@@ -19,6 +19,34 @@ export type AgentRunResult = {
 };
 
 export type ToolExecutor = (name: string, input: unknown) => Promise<unknown>;
+
+function extractToolCalls(response: OpenAI.Beta.Responses.Response | null) {
+  const calls: { id: string; name: string; arguments: unknown }[] = [];
+  if (!response?.output) return calls;
+  for (const part of response.output as any[]) {
+    if (part.type === "tool_call" && part.tool_call) {
+      const args = (() => {
+        try {
+          return JSON.parse(part.tool_call.arguments || "{}");
+        } catch {
+          return part.tool_call.arguments;
+        }
+      })();
+      calls.push({ id: part.tool_call.id, name: part.tool_call.name, arguments: args });
+    }
+  }
+  return calls;
+}
+
+function extractText(response: OpenAI.Beta.Responses.Response | null) {
+  if (!response?.output) return "";
+  for (const part of response.output as any[]) {
+    if (part.type === "output_text" && typeof part.text === "string") {
+      return part.text;
+    }
+  }
+  return "";
+}
 
 export async function runAgent({
   model,
@@ -46,63 +74,64 @@ export async function runAgent({
     end: "",
   };
 
-  const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-    { role: "system", content: systemPrompt },
-    { role: "user", content: userPrompt },
-  ];
+  const executedCalls = new Set<string>();
+
+  let response = await client.responses.create({
+    model,
+    input: [
+      { role: "system", content: [{ type: "text", text: systemPrompt }] },
+      { role: "user", content: [{ type: "text", text: userPrompt }] },
+    ],
+    tools,
+    temperature: 0.35,
+  });
 
   let finalContent = "";
 
   for (let i = 0; i < maxSteps; i++) {
     trace.steps += 1;
-    const completion = await client.chat.completions.create({
-      model,
-      messages,
-      tools,
-      tool_choice: "auto",
-      temperature: 0.35,
-    });
-
-    const choice = completion.choices[0];
-    const message = choice?.message;
-    if (message?.tool_calls?.length) {
-      for (const call of message.tool_calls) {
-        const name = call.function.name;
-        let input: unknown = {};
-        try {
-          input = JSON.parse(call.function.arguments || "{}");
-        } catch {
-          input = call.function.arguments;
-        }
-
-        const output = await executeTool(name, input).catch(() => ({ error: "tool execution failed" }));
-
-        if (name === "fetch_url" || name === "fetch_public_page") {
-          const url = (input as { url?: string })?.url;
-          if (url) trace.urls_fetched.push(url);
-        }
-        if (name === "web_search") {
-          const query = (input as { query?: string })?.query;
-          if (query) trace.searches_run.push(query);
-        }
-
-        trace.tools_called.push({
-          name,
-          input,
-          output_summary: JSON.stringify(output).slice(0, 400),
-        });
-
-        messages.push({
-          role: "tool",
-          tool_call_id: call.id,
-          content: JSON.stringify(output),
-        });
-      }
-      continue;
+    const calls = extractToolCalls(response);
+    if (calls.length === 0) {
+      finalContent = extractText(response);
+      break;
     }
 
-    finalContent = message?.content || "";
-    break;
+    const toolOutputs: { tool_call_id: string; output: string }[] = [];
+    for (const call of calls) {
+      if (executedCalls.has(call.id)) continue;
+      executedCalls.add(call.id);
+      const output = await executeTool(call.name, call.arguments).catch(() => ({ error: "tool execution failed" }));
+      if (call.name === "fetch_public_page") {
+        const url = (call.arguments as { url?: string })?.url;
+        if (url) trace.urls_fetched.push(url);
+      }
+      if (call.name === "web_search") {
+        const query = (call.arguments as { query?: string })?.query;
+        if (query) trace.searches_run.push(query);
+      }
+      trace.tools_called.push({
+        name: call.name,
+        input: call.arguments,
+        output_summary: JSON.stringify(output).slice(0, 400),
+      });
+      toolOutputs.push({ tool_call_id: call.id, output: JSON.stringify(output) });
+    }
+
+    if (!toolOutputs.length) {
+      finalContent = extractText(response);
+      break;
+    }
+
+    response = await client.responses.create({
+      model,
+      response_id: response.id,
+      tool_outputs: toolOutputs,
+      temperature: 0.35,
+    });
+  }
+
+  if (!finalContent) {
+    finalContent = extractText(response);
   }
 
   trace.end = new Date().toISOString();

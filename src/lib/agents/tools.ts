@@ -1,84 +1,120 @@
+﻿import { z } from "zod";
 import { ensureHttpsUrl, featureFlags, serverEnv } from "@/src/lib/env";
 
 const MAX_SNIPPET = 1200;
+const TIMEOUT_MS = 5000;
+const ALLOWED_PROTOCOL = /^https:\/\//i;
 
 type FetchOutput = { url: string; snippet: string };
 type SearchOutput = { results: { title?: string; url: string; snippet: string }[] };
 
 export type ToolResult =
-  | { name: "fetch_url"; output: FetchOutput | null }
   | { name: "fetch_public_page"; output: FetchOutput | null }
   | { name: "web_search"; output: SearchOutput | null };
 
-export async function toolFetchUrl(url: string): Promise<{ name: "fetch_url"; output: FetchOutput | null }> {
-  const safeUrl = ensureHttpsUrl(url);
-  try {
-    const res = await fetch(safeUrl, { method: "GET", next: { revalidate: 120 } });
-    const text = await res.text();
-    return {
-      name: "fetch_url",
-      output: text
-        ? {
-            url: safeUrl,
-            snippet: text.replace(/\s+/g, " ").slice(0, MAX_SNIPPET),
-          }
-        : null,
-    };
-  } catch {
-    return { name: "fetch_url", output: null };
-  }
+const fetchSchema = z.object({ url: z.string().url() });
+const searchSchema = z.object({ query: z.string().min(2).max(200) });
+
+export const toolDefinitions = [
+  {
+    type: "function" as const,
+    function: {
+      name: "fetch_public_page",
+      description: "Fetch a public web page and return a short snippet of text content.",
+      parameters: {
+        type: "object",
+        properties: {
+          url: { type: "string", format: "uri" },
+        },
+        required: ["url"],
+      },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "web_search",
+      description: "Search the web for a short list of relevant links and snippets.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", minLength: 2, maxLength: 200 },
+        },
+        required: ["query"],
+      },
+    },
+  },
+] as const;
+
+function withTimeout<T>(promise: Promise<T>): Promise<T | null> {
+  return Promise.race([
+    promise,
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), TIMEOUT_MS)),
+  ]);
 }
 
-export async function toolFetchPublicPage(url: string): Promise<{ name: "fetch_public_page"; output: FetchOutput | null }> {
-  if (featureFlags.mcpEnabled && serverEnv.MCP_FETCH_URL) {
-    try {
-      const res = await fetch(serverEnv.MCP_FETCH_URL, {
+async function fetchViaMcp(path: string, body: unknown): Promise<any | null> {
+  if (!featureFlags.mcpEnabled || !serverEnv.MCP_SERVER_URL) return null;
+  try {
+    const res = await withTimeout(
+      fetch(`${serverEnv.MCP_SERVER_URL.replace(/\/$/, "")}/${path.replace(/^\//, "")}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      });
-      if (res.ok) {
-        const data = (await res.json()) as { url?: string; snippet?: string };
-        if (data.url && data.snippet) {
-          return {
-            name: "fetch_public_page",
-            output: { url: ensureHttpsUrl(data.url), snippet: data.snippet.slice(0, MAX_SNIPPET) },
-          };
-        }
-      }
-    } catch {
-      // fall through to basic fetch
-    }
+        body: JSON.stringify(body),
+      }),
+    );
+    if (!res || !(res as Response).ok) return null;
+    return await (res as Response).json();
+  } catch {
+    return null;
   }
-  const basic = await toolFetchUrl(url);
-  return { name: "fetch_public_page", output: basic.output };
 }
 
-export async function toolWebSearch(query: string): Promise<{ name: "web_search"; output: SearchOutput | null }> {
-  if (!featureFlags.mcpEnabled || !serverEnv.MCP_WEB_SEARCH_URL) {
-    return { name: "web_search", output: { results: [] } };
-  }
+async function basicFetch(url: string): Promise<FetchOutput | null> {
+  const safeUrl = ensureHttpsUrl(url);
+  if (!ALLOWED_PROTOCOL.test(safeUrl)) return null;
   try {
-    const res = await fetch(serverEnv.MCP_WEB_SEARCH_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query }),
-    });
-    if (!res.ok) return { name: "web_search", output: { results: [] } };
-    const data = (await res.json()) as { results?: { title?: string; url?: string; snippet?: string }[] };
+    const res = await withTimeout(fetch(safeUrl, { method: "GET", next: { revalidate: 120 } }));
+    if (!res) return null;
+    const text = await (res as Response).text();
+    return text
+      ? {
+          url: safeUrl,
+          snippet: text.replace(/\s+/g, " ").slice(0, MAX_SNIPPET),
+        }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function toolFetchPublicPage(input: unknown): Promise<{ name: "fetch_public_page"; output: FetchOutput | null }> {
+  const parsed = fetchSchema.safeParse(input);
+  if (!parsed.success) return { name: "fetch_public_page", output: null };
+  const mcp = await fetchViaMcp("fetch_public_page", parsed.data);
+  if (mcp?.url && mcp?.snippet) {
+    return { name: "fetch_public_page", output: { url: ensureHttpsUrl(mcp.url), snippet: String(mcp.snippet).slice(0, MAX_SNIPPET) } };
+  }
+  return { name: "fetch_public_page", output: await basicFetch(parsed.data.url) };
+}
+
+export async function toolWebSearch(input: unknown): Promise<{ name: "web_search"; output: SearchOutput | null }> {
+  const parsed = searchSchema.safeParse(input);
+  if (!parsed.success) return { name: "web_search", output: { results: [] } };
+  const mcp = await fetchViaMcp("web_search", parsed.data);
+  if (mcp?.results) {
     const results =
-      data.results?.slice(0, 3).flatMap((item) => {
-        if (!item.url) return [];
+      (mcp.results as any[]).slice(0, 3).flatMap((item) => {
+        if (!item?.url) return [];
         return [
           {
             title: item.title,
-            url: ensureHttpsUrl(item.url),
-            snippet: (item.snippet || item.title || "").slice(0, MAX_SNIPPET),
+            url: ensureHttpsUrl(String(item.url)),
+            snippet: String(item.snippet || item.title || "").slice(0, MAX_SNIPPET),
           },
         ];
       }) ?? [];
     return { name: "web_search", output: { results } };
-  } catch {
-    return { name: "web_search", output: { results: [] } };
   }
+  return { name: "web_search", output: { results: [] } };
 }

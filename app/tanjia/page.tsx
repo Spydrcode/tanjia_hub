@@ -52,6 +52,17 @@ async function TanjiaContent() {
         ).data || [];
 
   const leadIds = leads.map((l) => l.id);
+  const nowIso = new Date().toISOString();
+  const upcomingMeetings =
+    (
+      await supabase
+        .from("meetings")
+        .select("id, title, start_at, location_name, status")
+        .eq("owner_id", user.id)
+        .gte("start_at", nowIso)
+        .order("start_at", { ascending: true })
+        .limit(3)
+    ).data || [];
 
   const snapshots = featureFlags.showcaseMode
     ? demoLeads.map((l) => ({ lead_id: l.id, created_at: l.updated_at || l.created_at || "" }))
@@ -130,6 +141,15 @@ async function TanjiaContent() {
             </Button>
           </CardHeader>
         </Card>
+        <Card className="hover:shadow-md transition">
+          <CardHeader className="flex flex-col gap-2">
+            <p className="text-sm font-medium text-neutral-900">Upcoming meetings</p>
+            <p className="text-sm text-neutral-600">Prep and start capture in one place.</p>
+            <Button asChild variant="secondary" size="md">
+              <Link href="/tanjia/meetings">Open meetings</Link>
+            </Button>
+          </CardHeader>
+        </Card>
       </section>
 
       <section className="grid gap-4">
@@ -139,6 +159,33 @@ async function TanjiaContent() {
             {todayDue.length} follow-up{todayDue.length === 1 ? "" : "s"} due
           </p>
         </div>
+        {upcomingMeetings.length ? (
+          <Card>
+            <CardContent className="space-y-2 p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-neutral-900">Upcoming meetings</h3>
+                <Button asChild size="sm" variant="ghost">
+                  <Link href="/tanjia/meetings">All</Link>
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {upcomingMeetings.map((m) => (
+                  <div key={m.id} className="flex items-center justify-between rounded-lg border border-neutral-200 p-3">
+                    <div className="flex flex-col">
+                      <p className="text-sm font-semibold text-neutral-900">{m.title}</p>
+                      <p className="text-xs text-neutral-600">
+                        {format(new Date(m.start_at), "MMM d, h:mma")} {m.location_name ? `· ${m.location_name}` : ""}
+                      </p>
+                    </div>
+                    <Button asChild size="sm" variant="secondary">
+                      <Link href={`/tanjia/meetings/${m.id}/start`}>Start</Link>
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
         <Card>
           <CardContent className="flex flex-col gap-3">
             {todayDue.length > 0 ? (

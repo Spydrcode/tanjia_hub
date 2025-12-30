@@ -5,6 +5,8 @@ import { tanjiaConfig } from "@/lib/tanjia-config";
 import { ExplainHint } from "@/src/components/ui/explain-hint";
 import WalkthroughPanel from "./walkthrough-panel";
 import { requireAuthOrRedirect } from "@/lib/auth/redirect";
+import McpHealthCard from "./mcp-health-card";
+import { brandGradients } from "@/src/components/ui/brand";
 
 export const metadata: Metadata = {
   title: "System overview",
@@ -69,9 +71,10 @@ export default async function SystemOverviewPage() {
       </PageHeader>
 
       <WalkthroughPanel />
+      <McpHealthCard />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="shadow-sm">
+        <Card className={`shadow-sm bg-gradient-to-br ${brandGradients.surface}`}>
           <CardContent className="space-y-2 p-4">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-neutral-900">Scheduling without friction</p>
@@ -80,22 +83,22 @@ export default async function SystemOverviewPage() {
               </span>
             </div>
             <p className="text-sm text-neutral-700">
-              Scheduling stays inside the workspace. Two options: 15 minutes for quick alignment, 30 minutes for a working
-              session. Embedded booking + automatic tracking, no redirects.
+              Scheduling stays inside the workspace. Two options: 15 minutes for a quick alignment, 30 minutes for a working session.
+              Embedded booking and tracking, no redirects.
             </p>
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm">
+        <Card className={`shadow-sm bg-gradient-to-br ${brandGradients.surface}`}>
           <CardContent className="space-y-2 p-4">
-            <p className="text-sm font-semibold text-neutral-900">Follow-ups that don’t rely on memory</p>
+            <p className="text-sm font-semibold text-neutral-900">Follow-ups that don't rely on memory</p>
             <p className="text-sm text-neutral-700">
-              When a booking is created or changes, follow-ups are created automatically. Messages stay calm—no automation spam.
+              When a booking is created or changes, follow-ups are created automatically. Messages stay calm, no automation spam.
             </p>
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm">
+        <Card className={`shadow-sm bg-gradient-to-br ${brandGradients.surface}`}>
           <CardContent className="space-y-2 p-4">
             <p className="text-sm font-semibold text-neutral-900">Conversations that turn into next steps</p>
             <p className="text-sm text-neutral-700">
@@ -104,11 +107,11 @@ export default async function SystemOverviewPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm">
+        <Card className={`shadow-sm bg-gradient-to-br ${brandGradients.surface}`}>
           <CardContent className="space-y-2 p-4">
-            <p className="text-sm font-semibold text-neutral-900">AI that supports humans</p>
+            <p className="text-sm font-semibold text-neutral-900">Draft help that stays human-led</p>
             <p className="text-sm text-neutral-700">
-              Agents help with drafts, triage, and clarity, but relationships stay human-led.
+              Agents help with drafts, triage, and next steps, but relationships stay human-led.
             </p>
           </CardContent>
         </Card>
@@ -139,7 +142,7 @@ export default async function SystemOverviewPage() {
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-[2fr,1fr]">
-        <Card className="shadow-sm">
+        <Card className={`shadow-sm bg-gradient-to-br ${brandGradients.surface}`}>
           <CardContent className="space-y-2 p-4">
             <p className="text-sm font-semibold text-neutral-900">What this proves</p>
             <p className="text-sm text-neutral-700">Started free / low-cost.</p>
@@ -157,15 +160,14 @@ export default async function SystemOverviewPage() {
       <Card className="shadow-sm">
         <CardContent className="space-y-2 p-4">
           <p className="text-xs uppercase tracking-[0.08em] text-neutral-500">Quiet Founder note</p>
-          <p className="text-sm text-neutral-700">
-            This started simple. We only add complexity when growth earns it.
-          </p>
+          <p className="text-sm text-neutral-700">This started simple. We only add complexity when growth earns it.</p>
         </CardContent>
       </Card>
 
       <footer className="pt-2 text-xs text-neutral-500">
-        <p>Internal view • {tanjiaConfig.siteUrl}</p>
+        <p>Internal view � {tanjiaConfig.siteUrl}</p>
       </footer>
     </div>
   );
 }
+

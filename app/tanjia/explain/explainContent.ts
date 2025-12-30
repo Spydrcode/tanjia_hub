@@ -12,12 +12,17 @@ export const explainContent = {
   "followups.autoCreate": {
     why: "Ensures commitments are tracked without relying on memory.",
     replaces: "Sticky notes, ad-hoc reminders, and inbox searching.",
-    clientVersion: "Follow-ups can align to each client’s cadence and tone.",
+    clientVersion: "Follow-ups can align to each client's cadence and tone.",
   },
   "lead.detail": {
     why: "Gives one quiet view of context, actions, and status.",
     replaces: "Spreadsheet rows and fragmented notes across apps.",
     clientVersion: "Fields and layout can mirror client-specific workflows.",
+  },
+  "lead.enrich": {
+    why: "Pulls light public signals before adding a lead.",
+    replaces: "Opening tabs to copy snippets manually before saving.",
+    clientVersion: "Can point at client-approved sources and stay scoped.",
   },
   "agent.outputs": {
     why: "Drafts and prompts to reduce friction without removing judgment.",
@@ -31,7 +36,7 @@ export const explainContent = {
   },
   "metrics.operatingRhythm": {
     why: "Shows the cadence of activity without exposing any identities.",
-    replaces: "Screens full of raw data that can’t be shared live.",
+    replaces: "Screens full of raw data that can't be shared live.",
     clientVersion: "Can surface the few signals a client cares about.",
   },
   "bookings.webhook": {

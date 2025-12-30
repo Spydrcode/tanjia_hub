@@ -74,6 +74,9 @@ export default async function TanjiaLayout({ children }: { children: React.React
               <Link href="/tanjia/followups" className="text-sm font-medium text-neutral-800 hover:text-neutral-950">
                 Follow-ups
               </Link>
+              <Link href="/tanjia/meetings" className="text-sm font-medium text-neutral-800 hover:text-neutral-950">
+                Meetings
+              </Link>
               <Link href="/tanjia/system-overview" className="text-sm font-medium text-neutral-800 hover:text-neutral-950">
                 System overview
               </Link>

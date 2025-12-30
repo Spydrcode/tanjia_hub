@@ -99,8 +99,26 @@ export async function POST(request: NextRequest) {
       if (ownerId) matchReason = matchReason || "organizer_fallback";
     }
 
-    const status = getStatus(eventName);
-    const needsReview = !ownerId || !leadId;
+    const incomingStatus = getStatus(eventName);
+    let existingBooking: { status?: string | null; match_reason?: string | null } | null = null;
+    if (bookingId) {
+      const { data } = await supabase
+        .from("lead_bookings")
+        .select("status, match_reason")
+        .eq("cal_booking_id", bookingId)
+        .single();
+      existingBooking = data ?? null;
+    }
+
+    let status = incomingStatus;
+    let needsReview = !ownerId || !leadId;
+
+    if (existingBooking?.status === "canceled" && incomingStatus === "created") {
+      status = "canceled";
+      needsReview = true;
+      matchReason = matchReason || existingBooking?.match_reason || "cancel_precedes_create";
+    }
+
     const finalMatchReason = needsReview ? matchReason || "missing_owner_mapping" : matchReason || "resolved";
 
     await upsertLeadBooking(supabase, {

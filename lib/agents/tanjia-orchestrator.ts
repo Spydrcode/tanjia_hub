@@ -4,7 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createPineconeClient } from "@/lib/pinecone/client";
 import { featureFlags, normalizeWebsite } from "@/src/lib/env";
 import { runAgent, type AgentTrace, type AgentTool } from "@/src/lib/agents/runtime";
-import { toolFetchPublicPage, toolFetchUrl, toolWebSearch } from "@/src/lib/agents/tools";
+import { toolDefinitions, toolFetchPublicPage, toolWebSearch } from "@/src/lib/agents/tools";
 import { getOpenAIClient } from "@/src/lib/openai/client";
 
 type RunParams = {
@@ -16,7 +16,7 @@ type RunParams = {
 type SourceCapture = {
   url: string;
   snippet: string;
-  via: "fetch_url" | "fetch_public_page" | "web_search";
+  via: "fetch_public_page" | "web_search";
 };
 
 const OutputSchema = z.object({
@@ -52,44 +52,7 @@ export async function runLeadIntelligence({ leadId, ownerId, deep = false }: Run
     Boolean,
   ) as string[];
 
-  const tools: AgentTool[] = [
-    {
-      type: "function",
-      function: {
-        name: "fetch_url",
-        description: "Fetch a URL and return a short snippet (<=1200 chars).",
-        parameters: {
-          type: "object",
-          properties: { url: { type: "string" } },
-          required: ["url"],
-        },
-      },
-    },
-    {
-      type: "function",
-      function: {
-        name: "fetch_public_page",
-        description: "Fetch a URL via MCP if available, fallback to direct fetch.",
-        parameters: {
-          type: "object",
-          properties: { url: { type: "string" } },
-          required: ["url"],
-        },
-      },
-    },
-    {
-      type: "function",
-      function: {
-        name: "web_search",
-        description: "Run a short web search for public signals.",
-        parameters: {
-          type: "object",
-          properties: { query: { type: "string" } },
-          required: ["query"],
-        },
-      },
-    },
-  ];
+  const tools: AgentTool[] = toolDefinitions as AgentTool[];
 
   async function runOnce(model: string) {
     const collected: SourceCapture[] = [];
@@ -115,22 +78,15 @@ If signals are thin, be cautious and invite correction.
 
     const executor = async (name: string, input: unknown) => {
       const payload = input as { url?: string; query?: string };
-      if (name === "fetch_url" && payload.url) {
-        const res = await toolFetchUrl(payload.url);
-        if (res.output && "url" in res.output) {
-          collected.push({ url: res.output.url, snippet: res.output.snippet, via: "fetch_url" });
-        }
-        return res.output ?? { url: payload.url, snippet: "" };
-      }
       if (name === "fetch_public_page" && payload.url) {
-        const res = await toolFetchPublicPage(payload.url);
+        const res = await toolFetchPublicPage({ url: payload.url });
         if (res.output && "url" in res.output) {
           collected.push({ url: res.output.url, snippet: res.output.snippet, via: "fetch_public_page" });
         }
         return res.output ?? { url: payload.url, snippet: "" };
       }
       if (name === "web_search" && payload.query) {
-        const res = await toolWebSearch(payload.query);
+        const res = await toolWebSearch({ query: payload.query });
         if (res.output && "results" in res.output && res.output.results?.length) {
           res.output.results.forEach((r) => {
             collected.push({ url: r.url, snippet: r.snippet, via: "web_search" });

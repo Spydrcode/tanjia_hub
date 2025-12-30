@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/src/components/ui/card";
 import { useViewModes } from "@/src/components/ui/view-modes";
 import { ExplainHint } from "@/src/components/ui/explain-hint";
 import { SensitiveText } from "@/src/components/ui/sensitive-text";
+import { brandGradients } from "@/src/components/ui/brand";
 
 type Duration = 15 | 30;
 
@@ -15,11 +16,6 @@ type Props = {
   leadContext?: { id?: string; name?: string; email?: string };
   userId?: string;
   bookingRedirectUrl?: string;
-};
-
-const gradients = {
-  "15": "from-emerald-500/20 via-emerald-400/10 to-transparent",
-  "30": "from-blue-500/20 via-blue-400/10 to-transparent",
 };
 
 export default function SchedulerClient({ calLinks, defaultDuration, leadContext, userId, bookingRedirectUrl }: Props) {
@@ -92,7 +88,7 @@ export default function SchedulerClient({ calLinks, defaultDuration, leadContext
                 Cal.com
               </span>
             </div>
-            <p className="text-sm text-neutral-600">No pitch. Just clarity on next steps.</p>
+            <p className="text-sm text-neutral-600">No pitch. Just a simple next step.</p>
             <div className="grid gap-3 sm:grid-cols-2">
               {([
                 { duration: 15 as Duration, title: "15 minutes", subtitle: "Quick alignment" },
@@ -106,7 +102,11 @@ export default function SchedulerClient({ calLinks, defaultDuration, leadContext
                     selected === item.duration ? "border-neutral-900 shadow-lg" : "border-neutral-200 shadow-sm"
                   } bg-white px-4 py-4 text-left transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400`}
                 >
-                  <div className={`absolute inset-0 pointer-events-none bg-gradient-to-br ${gradients[item.duration.toString() as "15" | "30"]}`} />
+                  <div
+                    className={`absolute inset-0 pointer-events-none bg-gradient-to-br ${
+                      item.duration === 15 ? brandGradients.accentA : brandGradients.accentB
+                    }`}
+                  />
                   <div className="relative flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-neutral-900">{item.title}</p>
@@ -159,7 +159,7 @@ export default function SchedulerClient({ calLinks, defaultDuration, leadContext
         <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-lg transition">
           <div className="flex items-center justify-between border-b border-neutral-100 bg-gradient-to-r from-neutral-50 to-white px-4 py-3">
             <div>
-              <p className="text-sm font-medium text-neutral-900">Cal embed</p>
+              <p className="text-sm font-medium text-neutral-900">Scheduling</p>
               <p className="text-xs text-neutral-600">Booking stays inside the workspace.</p>
             </div>
             <span className="rounded-full bg-neutral-100 px-3 py-1 text-[11px] font-semibold text-neutral-700">
@@ -169,7 +169,7 @@ export default function SchedulerClient({ calLinks, defaultDuration, leadContext
           </div>
           <div className="h-[760px] w-full bg-neutral-50">
             <iframe
-              title="Cal embed"
+              title="Scheduling"
               src={embedUrl}
               className="h-full w-full"
               allow="fullscreen"

@@ -3,8 +3,8 @@ import { createServerClient } from "@supabase/ssr";
 import { publicEnv } from "@/src/lib/env";
 
 export async function createSupabaseServerClient() {
-  const headerList = await headers();
-  const cookieStore = await cookies();
+  const headerList = headers();
+  const cookieStore = cookies();
 
   return createServerClient(
     publicEnv.supabaseUrl,
@@ -15,10 +15,18 @@ export async function createSupabaseServerClient() {
           return cookieStore.get(name)?.value;
         },
         set(name: string, value: string, options: Record<string, unknown>) {
-          cookieStore.set({ name, value, ...options });
+          try {
+            cookieStore.set({ name, value, ...options });
+          } catch {
+            // In server components outside actions/route handlers, cookie mutation is disallowed; ignore.
+          }
         },
         remove(name: string, options: Record<string, unknown>) {
-          cookieStore.set({ name, value: "", ...options, maxAge: 0 });
+          try {
+            cookieStore.set({ name, value: "", ...options, maxAge: 0 });
+          } catch {
+            // Ignore when not permitted to mutate cookies.
+          }
         },
       },
       headers: {

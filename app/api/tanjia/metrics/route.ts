@@ -32,7 +32,7 @@ export async function GET(_request: NextRequest) {
     let query = supabase
       .from("lead_bookings")
       .select("id", { count: "exact", head: true })
-      .or(`owner_id.eq.${user.id},user_id.eq.${user.id}`)
+      .eq("owner_id", user.id)
       .gte("created_at", start);
 
     if (status) query = query.eq("status", status);

@@ -180,7 +180,7 @@ export default function HelperClient({ cal15Url, cal30Url, initialLeadId, initia
                 Reset
               </Button>
             </div>
-            <p className="text-xs text-neutral-500">If it doesn’t feel true, don’t send it.</p>
+            <p className="text-xs text-neutral-500">If it doesn't feel true, don't send it.</p>
           </div>
         </CardContent>
       </Card>
@@ -218,7 +218,9 @@ export default function HelperClient({ cal15Url, cal30Url, initialLeadId, initia
 
       <div className="space-y-1 text-xs text-neutral-500">
         <p>Keep it human. Only use what feels true.</p>
-        <p>Cal links: 15m {cal15Url} · 30m {cal30Url}</p>
+        <p>
+          Cal links: 15m {cal15Url} | 30m {cal30Url}
+        </p>
       </div>
     </div>
   );

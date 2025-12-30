@@ -39,8 +39,7 @@ export const envSchema = z.object({
   MAX_SOURCES_MED: z.coerce.number().optional(),
   MAX_SOURCES_LARGE: z.coerce.number().optional(),
   MCP_ENABLED: z.coerce.boolean().optional(),
-  MCP_WEB_SEARCH_URL: z.string().optional(),
-  MCP_FETCH_URL: z.string().optional(),
+  MCP_SERVER_URL: z.string().optional(),
   SHOWCASE_MODE: z.coerce.boolean().optional(),
 });
 
@@ -85,8 +84,7 @@ export const env = parsedEnv.success
       MAX_SOURCES_MED: process.env.MAX_SOURCES_MED,
       MAX_SOURCES_LARGE: process.env.MAX_SOURCES_LARGE,
       MCP_ENABLED: process.env.MCP_ENABLED,
-      MCP_WEB_SEARCH_URL: process.env.MCP_WEB_SEARCH_URL,
-      MCP_FETCH_URL: process.env.MCP_FETCH_URL,
+  MCP_SERVER_URL: process.env.MCP_SERVER_URL,
       SHOWCASE_MODE: process.env.SHOWCASE_MODE,
     });
 
