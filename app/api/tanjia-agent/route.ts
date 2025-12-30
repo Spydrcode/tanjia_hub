@@ -20,6 +20,8 @@ const RequestSchema = z.object({
   leadId: z.string().optional(),
 });
 
+type RequestIntent = z.infer<typeof RequestSchema>["intent"];
+
 const defaultModel = serverEnv.TANJIA_AGENT_MODEL || tanjiaServerConfig.agentModelSmall;
 
 function trackRequest(key: string) {
@@ -208,7 +210,7 @@ Return JSON: { "options": ["reply 1", "reply 2"] }
         ? parsedOptions.map((opt) => opt.split(". ").slice(0, 3).join(". ").slice(0, 320))
         : [];
 
-    const fallbackOptions: Record<typeof body.intent, string[]> = {
+    const fallbackOptions: Record<RequestIntent, string[]> = {
       reflect: [
         "Thanks for sharing this. If it's useful, I can read more and send a quiet note back.",
         "Appreciate the update. Would you like a short second look, or should I hold off?",
