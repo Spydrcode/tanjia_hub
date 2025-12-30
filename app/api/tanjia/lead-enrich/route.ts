@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { tanjiaServerConfig } from "@/lib/tanjia-config";
 import { toolFetchPublicPage, toolWebSearch } from "@/src/lib/agents/tools";
@@ -11,6 +12,7 @@ import { tryParseWithRepair } from "@/src/lib/agents/repair";
 const MAX_SNIPPETS = 3;
 
 type EnrichInput = { website?: string; name?: string; location?: string; notes?: string };
+type EnrichResponse = z.infer<typeof LeadEnrichResponseSchema>;
 
 async function gatherSignals({ website, name, location }: EnrichInput) {
   const snippetSources: { url: string; via: string }[] = [];

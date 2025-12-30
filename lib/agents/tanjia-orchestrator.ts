@@ -52,7 +52,8 @@ export async function runLeadIntelligence({ leadId, ownerId, deep = false }: Run
     Boolean,
   ) as string[];
 
-  const tools: AgentTool[] = toolDefinitions as AgentTool[];
+  // clone to satisfy mutable array expectation of OpenAI client
+  const tools: AgentTool[] = [...toolDefinitions] as AgentTool[];
 
   async function runOnce(model: string) {
     const collected: SourceCapture[] = [];

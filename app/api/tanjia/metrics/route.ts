@@ -12,6 +12,8 @@ export async function GET(_request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const ownerId = user.id;
+
   const since = subDays(new Date(), 7).toISOString();
   const prevSince = subDays(new Date(), 14).toISOString();
   const prevUntil = since;
@@ -21,7 +23,7 @@ export async function GET(_request: NextRequest) {
       .from("messages")
       .select("id", { count: "exact", head: true })
       .eq("message_type", type)
-      .eq("owner_id", user.id)
+      .eq("owner_id", ownerId)
       .gte("created_at", start);
     if (end) query = query.lt("created_at", end);
     const { count } = await query;
@@ -32,7 +34,7 @@ export async function GET(_request: NextRequest) {
     let query = supabase
       .from("lead_bookings")
       .select("id", { count: "exact", head: true })
-      .eq("owner_id", user.id)
+      .eq("owner_id", ownerId)
       .gte("created_at", start);
 
     if (status) query = query.eq("status", status);

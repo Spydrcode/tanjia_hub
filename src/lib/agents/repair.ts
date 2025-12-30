@@ -25,14 +25,14 @@ export async function tryParseWithRepair<T>({
     const repaired = await client.responses.create({
       model,
       input: [
-        { role: "system", content: [{ type: "text", text: systemPrompt }] },
+        { role: "system", content: [{ type: "input_text", text: systemPrompt }] } as any,
         {
           role: "user",
-          content: [{ type: "text", text: `${repairPrompt}\nSCHEMA:${schema.toString()}\nRAW:${raw.slice(0, 8000)}` }],
-        },
+          content: [{ type: "input_text", text: `${repairPrompt}\nSCHEMA:${schema.toString()}\nRAW:${raw.slice(0, 8000)}` }],
+        } as any,
       ],
       temperature: 0,
-    });
+    } as any);
     const text = extractText(repaired);
     const parsed = schema.safeParse(safeJson(text));
     if (parsed.success) return { success: true, data: parsed.data };

@@ -52,7 +52,7 @@ type DashboardClientProps = {
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.17, 0.67, 0.35, 0.97] as const } },
 };
 
 const stagger = {

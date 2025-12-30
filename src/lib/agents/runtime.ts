@@ -1,7 +1,7 @@
 import type OpenAI from "openai";
 import { getOpenAIClient } from "@/src/lib/openai/client";
 
-export type AgentTool = OpenAI.Beta.Responses.Tool;
+export type AgentTool = any;
 
 export type AgentTrace = {
   model: string;
@@ -20,7 +20,7 @@ export type AgentRunResult = {
 
 export type ToolExecutor = (name: string, input: unknown) => Promise<unknown>;
 
-function extractToolCalls(response: OpenAI.Beta.Responses.Response | null) {
+function extractToolCalls(response: any | null) {
   const calls: { id: string; name: string; arguments: unknown }[] = [];
   if (!response?.output) return calls;
   for (const part of response.output as any[]) {
@@ -38,7 +38,7 @@ function extractToolCalls(response: OpenAI.Beta.Responses.Response | null) {
   return calls;
 }
 
-function extractText(response: OpenAI.Beta.Responses.Response | null) {
+function extractText(response: any | null) {
   if (!response?.output) return "";
   for (const part of response.output as any[]) {
     if (part.type === "output_text" && typeof part.text === "string") {
@@ -76,13 +76,13 @@ export async function runAgent({
 
   const executedCalls = new Set<string>();
 
-  let response = await client.responses.create({
+  let response: any = await (client.responses.create as any)({
     model,
     input: [
-      { role: "system", content: [{ type: "text", text: systemPrompt }] },
-      { role: "user", content: [{ type: "text", text: userPrompt }] },
+      { role: "system", content: [{ type: "input_text", text: systemPrompt }] },
+      { role: "user", content: [{ type: "input_text", text: userPrompt }] },
     ],
-    tools,
+    tools: tools as any,
     temperature: 0.35,
   });
 
@@ -122,7 +122,7 @@ export async function runAgent({
       break;
     }
 
-    response = await client.responses.create({
+    response = await (client.responses.create as any)({
       model,
       response_id: response.id,
       tool_outputs: toolOutputs,

@@ -22,9 +22,10 @@ export function ViewModesProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const explain = window.localStorage.getItem(EXPLAIN_KEY);
-    const presentation = window.localStorage.getItem(PRESENTATION_KEY);
     setExplainMode(explain === "true");
-    setPresentationMode(presentation === "true");
+    // Always start a new session in regular mode; presentation must be explicitly enabled per visit.
+    setPresentationMode(false);
+    window.localStorage.removeItem(PRESENTATION_KEY);
   }, []);
 
   useEffect(() => {
