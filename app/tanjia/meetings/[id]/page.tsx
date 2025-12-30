@@ -8,11 +8,13 @@ import { requireAuthOrRedirect } from "@/lib/auth/redirect";
 import { startMeeting, endMeetingAndGenerateResults } from "../actions";
 
 export default async function MeetingDetailPage({ params }: { params: { id: string } }) {
+  const resolvedParams = await params;
+  const meetingId = resolvedParams.id;
   const { supabase, user } = await requireAuthOrRedirect();
   const { data } = await supabase
     .from("meetings")
     .select("id, title, group_name, start_at, end_at, status, location_name, address, notes, completed_at")
-    .eq("id", params.id)
+    .eq("id", meetingId)
     .eq("owner_id", user.id)
     .single();
 
@@ -20,14 +22,14 @@ export default async function MeetingDetailPage({ params }: { params: { id: stri
 
   async function startAction() {
     "use server";
-    await startMeeting(params.id);
-    redirect(`/tanjia/meetings/${params.id}/start`);
+    await startMeeting(meetingId);
+    redirect(`/tanjia/meetings/${meetingId}/start`);
   }
 
   async function endAction() {
     "use server";
-    await endMeetingAndGenerateResults(params.id);
-    redirect(`/tanjia/meetings/${params.id}/results`);
+    await endMeetingAndGenerateResults(meetingId);
+    redirect(`/tanjia/meetings/${meetingId}/results`);
   }
 
   return (
@@ -57,10 +59,10 @@ export default async function MeetingDetailPage({ params }: { params: { id: stri
               </Button>
             </form>
             <Button asChild variant="ghost">
-              <Link href={`/tanjia/meetings/${params.id}/start`}>Capture</Link>
+              <Link href={`/tanjia/meetings/${meetingId}/start`}>Capture</Link>
             </Button>
             <Button asChild variant="ghost">
-              <Link href={`/tanjia/meetings/${params.id}/results`}>Results</Link>
+              <Link href={`/tanjia/meetings/${meetingId}/results`}>Results</Link>
             </Button>
             {data.status !== "completed" ? (
               <form action={endAction}>

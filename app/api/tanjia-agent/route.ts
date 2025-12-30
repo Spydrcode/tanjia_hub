@@ -208,14 +208,39 @@ Return JSON: { "options": ["reply 1", "reply 2"] }
         ? parsedOptions.map((opt) => opt.split(". ").slice(0, 3).join(". ").slice(0, 320))
         : [];
 
-    if (boundedOptions.length < 2) {
-      throw new Error("No reply options could be parsed.");
-    }
+    const fallbackOptions: Record<typeof body.intent, string[]> = {
+      reflect: [
+        "Thanks for sharing this. If it's useful, I can read more and send a quiet note back.",
+        "Appreciate the update. Would you like a short second look, or should I hold off?",
+      ],
+      invite: [
+        "Happy to compare notes. If you'd like, I can send a short outline and we can keep it light.",
+        "If a calm review would help, I'm here. If not, no worries at all.",
+      ],
+      schedule: [
+        "If you want, here's a low-pressure 15-minute slot: I can also send a longer option.",
+        "We can keep it brief and adjust if needed. If you'd rather not schedule now, that's fine too.",
+      ],
+      encourage: [
+        "You're moving the right pieces. If you'd like a quick second pair of eyes, I'm here.",
+        "No rush—let me know if a short review would be helpful. Otherwise I'll stay out of the way.",
+      ],
+    };
+
+    const options =
+      boundedOptions.length >= 2
+        ? boundedOptions
+        : (content ? parseOptions(content).slice(0, 2) : []).filter((opt) => opt.length > 0).slice(0, 2);
+
+    const finalOptions =
+      options.length >= 2
+        ? options
+        : fallbackOptions[body.intent] ?? ["Happy to help. Tell me if you'd like a short reply drafted.", "I can take a look and keep it light; just say the word."];
 
     const count = trackRequest(rateKey);
     console.log(`[tanjia-agent] request count: ${count}`);
 
-    return NextResponse.json({ options: boundedOptions });
+    return NextResponse.json({ options: finalOptions });
   } catch (error) {
     console.error("[tanjia-agent] generation error", error);
     return NextResponse.json({ error: "Unable to generate right now. Please try again shortly." }, { status: 500 });

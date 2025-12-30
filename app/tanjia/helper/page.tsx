@@ -13,7 +13,8 @@ export const metadata: Metadata = {
 };
 
 export default async function TanjiaHelperPage({ searchParams }: { searchParams?: { leadId?: string } }) {
-  const leadId = searchParams?.leadId;
+  const params = await searchParams;
+  const leadId = params?.leadId;
   let leadName: string | undefined;
 
   if (leadId) {
