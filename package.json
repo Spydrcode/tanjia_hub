@@ -9,9 +9,20 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@calcom/embed-react": "^1.5.3",
+    "@calcom/sdk": "^1.0.1",
+    "@pinecone-database/pinecone": "^4.1.0",
+    "@radix-ui/react-slot": "^1.1.0",
+    "@supabase/ssr": "^0.5.0",
+    "@supabase/supabase-js": "^2.47.0",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "next": "16.1.1",
+    "openai": "^4.77.4",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "resend": "^4.0.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

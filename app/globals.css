@@ -24,3 +24,9 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.presentation-mode [data-sensitive="true"],
+.presentation-mode [data-sensitive="note"],
+.presentation-mode [data-sensitive="message"] {
+  filter: blur(7px);
+}
