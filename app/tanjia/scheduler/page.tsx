@@ -50,7 +50,9 @@ export default async function SchedulerPage({ searchParams }: { searchParams?: S
     <div className="flex flex-col gap-6 pb-12">
       <PageHeader
         title="Schedule time"
-        description="Pick the smallest slot that fits. We’ll keep it simple."
+        anchor="Calm link"
+        eyebrow="Tanjia"
+        description="Pick the smallest slot that fits. We'll keep it simple."
         actionHref="/tanjia"
         actionLabel="Back to hub"
         actionVariant="ghost"

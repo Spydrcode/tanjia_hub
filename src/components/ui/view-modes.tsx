@@ -39,8 +39,21 @@ export function ViewModesProvider({ children }: { children: React.ReactNode }) {
   }, [presentationMode]);
 
   const toggleExplain = useCallback(() => setExplainMode((prev) => !prev), []);
-  const togglePresentation = useCallback(() => setPresentationMode((prev) => !prev), []);
-  const setPresentation = useCallback((value: boolean) => setPresentationMode(value), []);
+  const togglePresentation = useCallback(
+    () =>
+      setPresentationMode((prev) => {
+        const next = !prev;
+        if (next) setExplainMode(false);
+        return next;
+      }),
+    [],
+  );
+  const setPresentation = useCallback((value: boolean) => {
+    setPresentationMode((prev) => {
+      if (value) setExplainMode(false);
+      return value;
+    });
+  }, []);
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -56,6 +69,12 @@ export function ViewModesProvider({ children }: { children: React.ReactNode }) {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [toggleExplain, togglePresentation]);
+
+  useEffect(() => {
+    if (presentationMode && explainMode) {
+      setExplainMode(false);
+    }
+  }, [presentationMode, explainMode]);
 
   const value = useMemo(
     () => ({

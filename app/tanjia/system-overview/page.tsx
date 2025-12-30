@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+ï»¿import type { Metadata } from "next";
 import { PageHeader } from "@/src/components/ui/page-header";
 import { Card, CardContent } from "@/src/components/ui/card";
 import { tanjiaConfig } from "@/lib/tanjia-config";
@@ -61,7 +61,9 @@ export default async function SystemOverviewPage() {
   return (
     <div className="flex flex-col gap-8 pb-12">
       <PageHeader
-        title="System overview"
+        title="System"
+        anchor="overview"
+        eyebrow="Tanjia"
         description="A client-safe view of how the hub runs day to day."
         actionHref="/tanjia"
         actionLabel="Back to hub"
@@ -165,9 +167,8 @@ export default async function SystemOverviewPage() {
       </Card>
 
       <footer className="pt-2 text-xs text-neutral-500">
-        <p>Internal view · {tanjiaConfig.siteUrl}</p>
+        <p>Internal view - {tanjiaConfig.siteUrl}</p>
       </footer>
     </div>
   );
 }
-

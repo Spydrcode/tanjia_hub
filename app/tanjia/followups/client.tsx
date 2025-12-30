@@ -67,7 +67,7 @@ export default function FollowupsClient({ followups, onMarkDone, onSnooze }: Pro
   };
 
   return (
-    <Card>
+    <Card className="border-white/70 bg-white/90 shadow-md ring-1 ring-neutral-100 backdrop-blur">
       <CardContent className="space-y-4 p-4">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-medium text-neutral-900">

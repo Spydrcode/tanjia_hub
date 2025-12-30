@@ -56,7 +56,13 @@ export default async function FollowupsPage() {
 
   return (
     <div className="flex flex-col gap-6 pb-12">
-      <PageHeader title="Follow-ups" description="What is due today and next." />
+      <PageHeader
+        title="Follow-ups"
+        anchor="Queue"
+        eyebrow="Tanjia"
+        description="What is due today and next."
+        size="lg"
+      />
       <FollowupsClient
         followups={items.map((item) => ({
           ...item,

@@ -29,8 +29,11 @@ export default async function TanjiaHelperPage({ searchParams }: { searchParams?
   return (
     <div className="flex flex-col gap-6 pb-12">
       <PageHeader
-        title="Message reply helper"
+        title="Message reply"
+        anchor="Helper"
+        eyebrow="Tanjia"
         description="Calm replies in under a minute. Use only what feels true."
+        size="lg"
       />
       <HelperClient
         cal15Url={tanjiaConfig.calEvent15Url}

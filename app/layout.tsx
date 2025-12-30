@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Tanjia Networking Hub",
   description: "Quiet, permission-based networking for 2ndmynd.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon.ico",

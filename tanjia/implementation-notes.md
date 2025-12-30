@@ -1,4 +1,4 @@
-# Tanjia Networking Hub ñ Implementation Notes
+# Tanjia Networking Hub ‚Äì Implementation Notes
 
 ## What changed
 - Added MCP health check API (`app/api/tanjia/mcp-health/route.ts`) and explain-only status card on the system overview.
@@ -12,14 +12,14 @@
 ## How to test MCP health
 1. Ensure MCP feature flags/URLs are set in env (`MCP_SERVER_URL`, `MCP_ENABLED` if applicable).
 2. Visit `/tanjia/system-overview` and turn on Explain Mode (Ctrl+Shift+E).
-3. Confirm the MCP card shows OK/Check states; failures should not throw, only show ìCheckî.
+3. Confirm the MCP card shows OK/Check states; failures should not throw, only show ‚ÄúCheck‚Äù.
 4. API direct test: `curl -X GET http://localhost:3000/api/tanjia/mcp-health` while authenticated.
 
 ## How to test lead enrichment
 1. Go to `/tanjia/leads/new` while logged in.
 2. Enter a website (and optional name/location/notes).
-3. Click ìFetch website signalsî (or ìGenerate quick overviewî) and confirm preview cards populate.
-4. Submit ìCreate leadî. After redirect, verify a `lead_snapshots` row exists with `runType: "enrich"` in `extracted_json`.
+3. Click ‚ÄúFetch website signals‚Äù (or ‚ÄúGenerate quick overview‚Äù) and confirm preview cards populate.
+4. Submit ‚ÄúCreate lead‚Äù. After redirect, verify a `lead_snapshots` row exists with `runType: "enrich"` in `extracted_json`.
 5. Test with MCP disabled to ensure graceful, cautious outputs.
 
 ## Meetings workflow
@@ -36,7 +36,7 @@
 - Lead enrichment snapshots save structured JSON only (signals/overview) with lead-linked RLS.
 
 ## Copy sweep
-- Removed dev-ish terms in user UI; no public-facing ìclarityî, ìCal embedî, or ìclient-sideî phrasing in /tanjia surfaces.
+- Removed dev-ish terms in user UI; no public-facing ‚Äúclarity‚Äù, ‚ÄúCal embed‚Äù, or ‚Äúclient-side‚Äù phrasing in /tanjia surfaces.
 
 ## Icons/OG
 - Added favicon/app icons and OG image in `public/`: `favicon.ico`, `favicon-16x16.png`, `favicon-32x32.png`, `apple-touch-icon.png`, `android-chrome-192x192.png`, `android-chrome-512x512.png`, `site.webmanifest`, `og.png`.
@@ -58,3 +58,8 @@
 ## MCP stub
 - Minimal MCP server at `mcp-server/index.ts` (node-based) exposing `fetch_public_page` and `web_search` (read-only, https-only for fetch).
 - Run locally: `node mcp-server/index.ts` (uses PORT env or 8787). Set `MCP_SERVER_URL=http://localhost:8787` and `MCP_ENABLED=true` to exercise tools.
+
+## Dashboard polish and presentation access
+- /tanjia now uses a GradientHeading hero + GradientPills, 12-col grid, Today/quick actions/operating rhythm strips, and subtle Framer Motion transitions to match the 2ndmynd visual style.
+- Presentation Mode: use the dashboard "Presentation Mode" primary CTA (or the header "Client view" control). It turns off Explain, enables presentation mode, and routes to `/tanjia/system-overview`; the secondary dashboard button copies the client-safe link.
+- Anchor gradients: page headers now use `PageHeader` with `anchor` for /tanjia, Leads, Follow-ups, Meetings, Scheduler, Helper, and System overview. Confirm by checking the gradient word in each heading.

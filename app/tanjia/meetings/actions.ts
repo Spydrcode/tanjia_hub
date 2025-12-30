@@ -6,6 +6,9 @@ import { requireAuthOrRedirect } from "@/lib/auth/redirect";
 import { runAgent } from "@/src/lib/agents/runtime";
 import { tanjiaServerConfig } from "@/lib/tanjia-config";
 import { createLead } from "../leads/actions";
+import { MeetingResultsResponseSchema } from "@/src/lib/agents/schemas";
+import { tryParseWithRepair } from "@/src/lib/agents/repair";
+import { quietFounderRules, jsonOnlyRule } from "@/src/lib/agents/prompt-kits";
 
 export type MeetingPayload = {
   title: string;
@@ -162,9 +165,14 @@ async function generateMeetingResults(meetingId: string, ownerId: string) {
     })
     .join("\n");
 
-  const systemPrompt = `You are a calm networking operator. Tone: Quiet Founder, permission-based, no hype. Do not use the word "clarity". Keep responses concise.`;
+  const systemPrompt = `
+${quietFounderRules}
+${jsonOnlyRule}
+- Follow-up items must include interaction_id and a brief score_reason.
+- Keep next_message under 260 chars; permission-based, no push.
+  `;
 
-  const userPrompt = `Meeting details:\n- Title: ${meeting.title}\n- Group: ${meeting.group_name || "n/a"}\n- Start: ${meeting.start_at}\n- Location: ${meeting.location_name || ""} ${meeting.address || ""}\nNotes: ${meeting.notes || ""}\n\nInteractions:\n${interactionSummaries || "None logged."}\n\nReturn ONLY JSON with keys: summary_md (<=120 words, markdown), followup_plan (array), intro_tests (object with intro_a/intro_b text + when_to_use), improvements (array). Follow-up messages must be calm, under 260 chars, optional 2nd Look invite only if natural.`;
+  const userPrompt = `Meeting details:\n- Title: ${meeting.title}\n- Group: ${meeting.group_name || "n/a"}\n- Start: ${meeting.start_at}\n- Location: ${meeting.location_name || ""} ${meeting.address || ""}\nNotes: ${meeting.notes || ""}\n\nInteractions:\n${interactionSummaries || "None logged."}\n\nUse the provided schema. If information is thin, keep outputs short and cautious.`;
 
   const result = await runAgent({
     model: tanjiaServerConfig.agentModelSmall,

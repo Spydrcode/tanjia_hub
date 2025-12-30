@@ -4,28 +4,13 @@ import { tanjiaServerConfig } from "@/lib/tanjia-config";
 import { toolFetchPublicPage, toolWebSearch } from "@/src/lib/agents/tools";
 import { runAgent } from "@/src/lib/agents/runtime";
 import { ensureHttpsUrl } from "@/src/lib/env";
+import { quietFounderRules, jsonOnlyRule } from "@/src/lib/agents/prompt-kits";
+import { LeadEnrichResponseSchema } from "@/src/lib/agents/schemas";
+import { tryParseWithRepair } from "@/src/lib/agents/repair";
 
 const MAX_SNIPPETS = 3;
 
 type EnrichInput = { website?: string; name?: string; location?: string; notes?: string };
-
-type EnrichResponse = {
-  signals: {
-    website: string;
-    title?: string;
-    services?: string[];
-    locations?: string[];
-    contact?: { email?: string; phone?: string };
-    socials?: { platform: string; url: string }[];
-    credibility?: string[];
-    snippetSources?: { url: string; via: string }[];
-  };
-  overview: {
-    bio: string;
-    likelyNeeds: string[];
-    suggestedNextStep: string;
-  };
-};
 
 async function gatherSignals({ website, name, location }: EnrichInput) {
   const snippetSources: { url: string; via: string }[] = [];
@@ -74,7 +59,7 @@ async function gatherSignals({ website, name, location }: EnrichInput) {
   return { normalizedWebsite, snippetSources, snippets };
 }
 
-function buildPrompt(data: EnrichInput, snippets: string[]) {
+function buildPrompt(data: EnrichInput, snippets: string[], sources: { url: string; via: string }[]) {
   const lines = [
     `Name: ${data.name || ""}`,
     `Location: ${data.location || ""}`,
@@ -85,29 +70,25 @@ function buildPrompt(data: EnrichInput, snippets: string[]) {
   const context = snippets.length
     ? `Observed snippets (keep it brief):\n- ${snippets.slice(0, MAX_SNIPPETS).join("\n- ")}`
     : "Very limited public info. Offer cautious takeaways.";
+  const sourceList = sources.map((s) => `${s.via}: ${s.url}`).slice(0, 8).join("\n");
 
-  const systemPrompt = `You are a calm operator supporting a director of networking. Tone: Quiet Founder, permission-based, no hype, no clarity jargon.
-Return ONLY valid JSON matching this schema:
-{
-  "signals": {
-    "website": string,
-    "title"?: string,
-    "services"?: string[],
-    "locations"?: string[],
-    "contact"?: { "email"?: string, "phone"?: string },
-    "socials"?: { "platform": string, "url": string }[],
-    "credibility"?: string[],
-    "snippetSources"?: { "url": string, "via": string }[]
-  },
-  "overview": {
-    "bio": string,
-    "likelyNeeds": string[],
-    "suggestedNextStep": string
-  }
-}
-Rules: short sentences. If info is thin, say so. Never invent people or promises. Avoid sales language.`;
+  const systemPrompt = `
+${quietFounderRules}
+${jsonOnlyRule}
+- Evidence required: each likely need must include evidence and confidence (0-1).
+- Avoid generic needs unless supported (e.g., "marketing" or "CRM" only if evidence).
+- Add one "secondLookAngle" on how a quiet review could help, optional and permission-based.
+  `.trim();
 
-  const userPrompt = `${lines.join("\n")}\n${context}\nRespond with JSON only.`;
+  const userPrompt = `
+Lead enrichment. Keep it short and cautious.
+${lines.join("\n")}
+Sources:
+${sourceList || "none"}
+${context}
+
+JSON shape is defined by the schema provided; do not add extra fields.
+`.trim();
 
   return { systemPrompt, userPrompt };
 }
@@ -132,7 +113,7 @@ export async function POST(req: NextRequest) {
   if (!body) return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
 
   const { normalizedWebsite, snippetSources, snippets } = await gatherSignals(body);
-  const { systemPrompt, userPrompt } = buildPrompt({ ...body, website: normalizedWebsite }, snippets);
+  const { systemPrompt, userPrompt } = buildPrompt({ ...body, website: normalizedWebsite }, snippets, snippetSources);
 
   const agentResult = await runAgent({
     model: tanjiaServerConfig.agentModelSmall,
@@ -142,24 +123,28 @@ export async function POST(req: NextRequest) {
     executeTool: async () => null,
   });
 
-  const parsed = safeParse(agentResult.content || "");
+  const parsed =
+    (await tryParseWithRepair({
+      raw: agentResult.content || "",
+      schema: LeadEnrichResponseSchema,
+      repairPrompt: "Repair to the lead enrichment schema.",
+    })) || { success: false };
 
-  const signals = {
-    website: normalizedWebsite || body.website || "",
-    title: parsed?.signals?.title,
-    services: parsed?.signals?.services || [],
-    locations: parsed?.signals?.locations || [],
-    contact: parsed?.signals?.contact || {},
-    socials: parsed?.signals?.socials || [],
-    credibility: parsed?.signals?.credibility || [],
-    snippetSources,
-  } satisfies EnrichResponse["signals"];
+  const safeData =
+    parsed.success && parsed.data
+      ? parsed.data
+      : LeadEnrichResponseSchema.parse({
+          signals: {
+            website: normalizedWebsite || body.website || "",
+            snippetSources,
+          },
+          overview: {
+            bio: "Limited public info; keep outreach light.",
+            likelyNeeds: [],
+            suggestedNextStep: "Offer a short alignment to learn more before suggesting anything.",
+            secondLookAngle: "Offer a brief second look only if they want it.",
+          },
+        });
 
-  const overview = {
-    bio: parsed?.overview?.bio || "Limited public info; keep outreach light.",
-    likelyNeeds: parsed?.overview?.likelyNeeds?.length ? parsed.overview.likelyNeeds : ["Too little info to be confident."],
-    suggestedNextStep: parsed?.overview?.suggestedNextStep || "Offer a short alignment to learn more before suggesting anything.",
-  } satisfies EnrichResponse["overview"];
-
-  return NextResponse.json({ signals, overview } satisfies EnrichResponse);
+  return NextResponse.json(safeData);
 }

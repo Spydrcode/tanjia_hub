@@ -6,6 +6,11 @@ export function ViewModeIndicator() {
   const { explainMode, presentationMode } = useViewModes();
   if (!explainMode && !presentationMode) return null;
 
+  const clientLink =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/tanjia/system-overview`
+      : "/tanjia/system-overview";
+
   return (
     <div className="fixed inset-x-0 top-0 z-40 flex justify-center px-4 pt-2 sm:pt-3">
       <div className="flex items-center gap-2 rounded-full border border-neutral-200 bg-white/90 px-3 py-2 text-xs text-neutral-800 shadow-lg backdrop-blur">
@@ -16,7 +21,7 @@ export function ViewModeIndicator() {
             </span>
             <button
               type="button"
-              onClick={() => navigator.clipboard?.writeText("/tanjia/system-overview")}
+              onClick={() => navigator.clipboard?.writeText(clientLink)}
               className="rounded-full bg-neutral-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400"
             >
               Copy client-safe link

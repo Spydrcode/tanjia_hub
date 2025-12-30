@@ -3,8 +3,8 @@ import { createServerClient } from "@supabase/ssr";
 import { publicEnv } from "@/src/lib/env";
 
 export async function createSupabaseServerClient() {
-  const headerList = headers();
-  const cookieStore = cookies();
+  const headerList = await headers();
+  const cookieStore = await cookies();
 
   return createServerClient(
     publicEnv.supabaseUrl,
@@ -12,7 +12,11 @@ export async function createSupabaseServerClient() {
     {
       cookies: {
         get(name: string) {
-          return cookieStore.get(name)?.value;
+          try {
+            return cookieStore.get(name)?.value;
+          } catch {
+            return undefined;
+          }
         },
         set(name: string, value: string, options: Record<string, unknown>) {
           try {

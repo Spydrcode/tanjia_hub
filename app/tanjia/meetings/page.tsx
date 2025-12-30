@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
 import { brandGradients } from "@/src/components/ui/brand";
+import { PageHeader } from "@/src/components/ui/page-header";
 import { startMeeting } from "./actions";
 
 export const metadata: Metadata = {
@@ -67,16 +68,14 @@ export default async function MeetingsPage() {
 
   return (
     <div className="flex flex-col gap-6 pb-12">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-sm uppercase tracking-[0.08em] text-neutral-500">Tanjia</p>
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Meetings</h1>
-          <p className="text-sm text-neutral-600">Plan, capture, and follow up quietly.</p>
-        </div>
-        <Button asChild>
-          <Link href="/tanjia/meetings/new">New meeting</Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="Meetings"
+        anchor="Flow"
+        eyebrow="Tanjia"
+        description="Plan, capture, and follow up quietly."
+        actionHref="/tanjia/meetings/new"
+        actionLabel="New meeting"
+      />
 
       <section className="space-y-3">
         <div className="flex items-center justify-between">
