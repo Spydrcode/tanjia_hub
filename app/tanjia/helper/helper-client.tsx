@@ -26,9 +26,10 @@ type Props = {
   cal30Url: string;
   initialLeadId?: string;
   initialLeadName?: string;
+  emythHints?: { overload?: string; follow?: string };
 };
 
-export default function HelperClient({ cal15Url, cal30Url, initialLeadId, initialLeadName }: Props) {
+export default function HelperClient({ cal15Url, cal30Url, initialLeadId, initialLeadName, emythHints }: Props) {
   const [channel, setChannel] = useState<ChannelType>("dm");
   const [intent, setIntent] = useState<IntentType>("reflect");
   const [ownerMessage, setOwnerMessage] = useState("");
@@ -127,6 +128,12 @@ export default function HelperClient({ cal15Url, cal30Url, initialLeadId, initia
           <Badge variant="muted">
             Using: <SensitiveText text={leadName || leadId} id={leadId} />
           </Badge>
+          {!presentationMode && emythHints ? (
+            <div className="rounded-md bg-neutral-100 px-3 py-2 text-xs text-neutral-700">
+              {emythHints.overload ? <p>Owner role overload: {emythHints.overload}</p> : null}
+              {emythHints.follow ? <p>Next action system: {emythHints.follow}</p> : null}
+            </div>
+          ) : null}
           <Button size="sm" variant="ghost" onClick={clearLead}>
             Clear
           </Button>
@@ -145,7 +152,7 @@ export default function HelperClient({ cal15Url, cal30Url, initialLeadId, initia
                     <Button
                       key={option}
                       type="button"
-                      variant={active ? "default" : "secondary"}
+                      variant={active ? "primary" : "secondary"}
                       size="sm"
                       className="flex-1 uppercase tracking-[0.08em]"
                       onClick={() => setChannel(option)}

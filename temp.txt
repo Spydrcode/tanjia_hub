@@ -1,0 +1,12 @@
+        <div>
+          <p className="text-xs uppercase tracking-[0.08em] text-neutral-500">Tanjia</p>
+          <h1 className="text-2xl font-semibold text-neutral-900">Command dashboard</h1>
+          {!presentationMode ? (
+            <p className="text-sm text-neutral-600">
+              {currentPreset.description} · Success in 10 seconds: jump to the primary action below.
+            </p>
+          ) : null}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant={focusMode ? "default" : "secondary"} size="sm" onClick={toggleFocusMode}>
+            {focusMode ? "Focus mode on" : "Focus mode"}

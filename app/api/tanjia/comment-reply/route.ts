@@ -139,13 +139,13 @@ Return only the comment text. No bullets. No meta. Include the link once at the 
 `.trim();
 
   try {
-    const { content, trace } = await runAgent({
-      model: tanjiaServerConfig.agentModelSmall,
+    const { content, trace, _meta } = await runAgent({
       systemPrompt,
       userPrompt,
       tools: [],
       maxSteps: 1,
       executeTool: async () => ({}),
+      context: { taskName: "comment_reply", hasTools: false, inputLength: body.what_they_said.length, userText: body.what_they_said },
     });
 
     let text = enforceLength(cleanText(stripMeta(content || "")));
@@ -167,11 +167,22 @@ Return only the comment text. No bullets. No meta. Include the link once at the 
             searches_run: trace.searches_run,
             start: trace.start,
             end: trace.end,
+            _meta,
           }
         : undefined,
     });
 
-    return NextResponse.json({ text, traceId: traceId || null });
+    const clientReason = `Mirrors the specifics they shared and ends with the 2nd Look link with no pressure.`;
+    const internalReason = `Grounded in their post (${body.what_they_said.slice(0, 120)}${body.what_they_said.length > 120 ? "..." : ""}) and notes${body.notes ? ` (${body.notes.slice(0, 80)}${body.notes.length > 80 ? "..." : ""})` : ""}; kept calm, added 2nd Look once.`;
+
+    return NextResponse.json({
+      text,
+      traceId: traceId || null,
+      reasoning: {
+        internal: internalReason,
+        client: clientReason,
+      },
+    });
   } catch (error) {
     console.error("[tanjia][comment-reply] error", error);
     return NextResponse.json({ error: "Unable to draft right now." }, { status: 500 });

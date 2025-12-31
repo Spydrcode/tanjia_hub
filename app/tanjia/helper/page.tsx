@@ -16,6 +16,7 @@ export default async function TanjiaHelperPage({ searchParams }: { searchParams?
   const params = await searchParams;
   const leadId = params?.leadId;
   let leadName: string | undefined;
+  let emythHints: { overload?: string; follow?: string } | undefined;
 
   if (leadId) {
     if (featureFlags.showcaseMode) {
@@ -24,6 +25,20 @@ export default async function TanjiaHelperPage({ searchParams }: { searchParams?
       const { supabase } = await requireAuthOrRedirect();
       const { data: lead } = await supabase.from("leads").select("name").eq("id", leadId).single();
       leadName = lead?.name || undefined;
+      const { data: snap } = await supabase
+        .from("lead_snapshots")
+        .select("extracted_json")
+        .eq("lead_id", leadId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      const emyth = (snap?.extracted_json as any)?.emyth;
+      if (emyth) {
+        emythHints = {
+          overload: emyth.role_map?.overload_hotspots?.[0],
+          follow: emyth.follow_through?.stall_risk,
+        };
+      }
     }
   }
 
@@ -41,6 +56,7 @@ export default async function TanjiaHelperPage({ searchParams }: { searchParams?
         cal30Url={tanjiaConfig.calEvent30Url}
         initialLeadId={leadId}
         initialLeadName={leadName}
+        emythHints={emythHints}
       />
     </div>
   );

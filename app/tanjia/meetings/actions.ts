@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { formatISO } from "date-fns";
 import { requireAuthOrRedirect } from "@/lib/auth/redirect";
 import { runAgent } from "@/src/lib/agents/runtime";
-import { tanjiaServerConfig } from "@/lib/tanjia-config";
 import { createLead } from "../leads/actions";
 import { MeetingResultsResponseSchema } from "@/src/lib/agents/schemas";
 import { tryParseWithRepair } from "@/src/lib/agents/repair";
@@ -175,11 +174,19 @@ ${jsonOnlyRule}
   const userPrompt = `Meeting details:\n- Title: ${meeting.title}\n- Group: ${meeting.group_name || "n/a"}\n- Start: ${meeting.start_at}\n- Location: ${meeting.location_name || ""} ${meeting.address || ""}\nNotes: ${meeting.notes || ""}\n\nInteractions:\n${interactionSummaries || "None logged."}\n\nUse the provided schema. If information is thin, keep outputs short and cautious.`;
 
   const result = await runAgent({
-    model: tanjiaServerConfig.agentModelSmall,
     systemPrompt,
     userPrompt,
     tools: [],
     executeTool: async () => null,
+    context: { taskName: "meeting_results", hasTools: false, inputLength: userPrompt.length, schemaName: "meeting_results", userText: meeting.notes || "" },
+    validate: (raw) => {
+      try {
+        const json = JSON.parse(raw || "{}");
+        return { ok: Boolean(json), parsed: json };
+      } catch (err: any) {
+        return { ok: false, reason: err?.message || "parse_failed" };
+      }
+    },
   });
 
   let parsed: any = null;

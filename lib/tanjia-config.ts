@@ -26,7 +26,6 @@ export const tanjiaServerConfig = {
   helperPasscodeEnabled: Boolean(serverEnv.TANJIA_HELPER_PASSCODE),
   helperPasscode: serverEnv.TANJIA_HELPER_PASSCODE ?? null,
   resendFromEmail: serverEnv.RESEND_FROM_EMAIL || "tanjia@2ndmynd.com",
-  pineconeIndexName: serverEnv.PINECONE_INDEX_NAME || "",
   agentModelSmall: serverEnv.AGENT_MODEL_SMALL || "gpt-4o-mini",
   agentModelMed: serverEnv.AGENT_MODEL_MED || "gpt-4o",
   agentModelLarge: serverEnv.AGENT_MODEL_LARGE || "gpt-4.1",

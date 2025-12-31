@@ -41,6 +41,12 @@ export const envSchema = z.object({
   MCP_ENABLED: z.coerce.boolean().optional(),
   MCP_SERVER_URL: z.string().optional(),
   SHOWCASE_MODE: z.coerce.boolean().optional(),
+  MODEL_ESCALATION_ENABLED: z.string().optional(),
+  MODEL_DEFAULT: z.string().optional(),
+  MODEL_ESCALATED: z.string().optional(),
+  MODEL_ESCALATION_MAX_ATTEMPTS: z.string().optional(),
+  MODEL_ESCALATION_MINI_BUDGET: z.string().optional(),
+  MODEL_POLICY_DEBUG: z.string().optional(),
 });
 
 const parsedEnv = envSchema.safeParse({
@@ -84,8 +90,14 @@ export const env = parsedEnv.success
       MAX_SOURCES_MED: process.env.MAX_SOURCES_MED,
       MAX_SOURCES_LARGE: process.env.MAX_SOURCES_LARGE,
       MCP_ENABLED: process.env.MCP_ENABLED,
-  MCP_SERVER_URL: process.env.MCP_SERVER_URL,
+      MCP_SERVER_URL: process.env.MCP_SERVER_URL,
       SHOWCASE_MODE: process.env.SHOWCASE_MODE,
+      MODEL_ESCALATION_ENABLED: process.env.MODEL_ESCALATION_ENABLED,
+      MODEL_DEFAULT: process.env.MODEL_DEFAULT,
+      MODEL_ESCALATED: process.env.MODEL_ESCALATED,
+      MODEL_ESCALATION_MAX_ATTEMPTS: process.env.MODEL_ESCALATION_MAX_ATTEMPTS,
+      MODEL_ESCALATION_MINI_BUDGET: process.env.MODEL_ESCALATION_MINI_BUDGET,
+      MODEL_POLICY_DEBUG: process.env.MODEL_POLICY_DEBUG,
     });
 
 export const publicEnv = {

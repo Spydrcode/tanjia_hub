@@ -8,6 +8,7 @@ import { ViewModesProvider } from "@/src/components/ui/view-modes";
 import { ViewModeControls } from "@/src/components/ui/view-mode-controls";
 import { ViewModeIndicator } from "@/src/components/ui/view-mode-indicator";
 import { requireAuthOrRedirect } from "@/lib/auth/redirect";
+import { GuideWidget } from "./components/guide-widget";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -25,7 +26,8 @@ export default async function TanjiaLayout({ children }: { children: React.React
   const isAuth = Boolean(cookieStore.get("sb-access-token"));
   return (
     <ViewModesProvider>
-      <div className="min-h-screen bg-neutral-50 text-neutral-900">
+      <div className="relative min-h-screen bg-gradient-to-br from-neutral-50 via-white to-amber-50 text-neutral-900">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(0,0,0,0.02),transparent_45%),radial-gradient(circle_at_bottom_right,_rgba(0,0,0,0.03),transparent_35%)]" />
         <ViewModeIndicator />
         <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white/90 backdrop-blur">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-3 sm:px-6">
@@ -73,6 +75,7 @@ export default async function TanjiaLayout({ children }: { children: React.React
             2ndmynd
           </Link>
         </footer>
+        <GuideWidget />
       </div>
     </ViewModesProvider>
   );

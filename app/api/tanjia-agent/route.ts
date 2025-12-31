@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { tanjiaConfig, tanjiaServerConfig } from "@/lib/tanjia-config";
+import { tanjiaConfig } from "@/lib/tanjia-config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { createPineconeClient } from "@/lib/pinecone/client";
 import { featureFlags, serverEnv } from "@/src/lib/env";
 import { runAgent } from "@/src/lib/agents/runtime";
 import { getOpenAIClient } from "@/src/lib/openai/client";
@@ -21,8 +20,6 @@ const RequestSchema = z.object({
 });
 
 type RequestIntent = z.infer<typeof RequestSchema>["intent"];
-
-const defaultModel = serverEnv.TANJIA_AGENT_MODEL || tanjiaServerConfig.agentModelSmall;
 
 function trackRequest(key: string) {
   const now = Date.now();
@@ -69,34 +66,8 @@ async function retrieveLeadContext(leadId: string, ownerId: string, openai: Retu
     .limit(1)
     .single();
 
-  const pinecone = createPineconeClient();
+  // Pinecone removed
   let pineconeContext = "";
-
-  if (pinecone && featureFlags.pineconeEnabled && tanjiaServerConfig.pineconeIndexName) {
-    try {
-      const queryText = snapshot?.summary || "lead context";
-      const embed = await openai.embeddings.create({
-        model: "text-embedding-3-small",
-        input: queryText.slice(0, 1000),
-      });
-      const vector = embed.data[0]?.embedding;
-      if (vector) {
-        const index = pinecone.Index(tanjiaServerConfig.pineconeIndexName);
-        const namespace = index.namespace(ownerId);
-        const result = await namespace.query({ vector, topK: 3, filter: { leadId } });
-        pineconeContext = result.matches
-          ?.map((match) => {
-            const summary = typeof match.metadata?.summary === "string" ? match.metadata.summary : "";
-            return summary;
-          })
-          .filter(Boolean)
-          .join("\n")
-          .slice(0, 800) ?? "";
-      }
-    } catch (err) {
-      console.warn("[tanjia-agent] pinecone query failed", err);
-    }
-  }
 
   let snapshotContext = "";
   if (snapshot) {
@@ -193,12 +164,12 @@ Return JSON: { "options": ["reply 1", "reply 2"] }
 
   try {
     const { content } = await runAgent({
-      model: defaultModel,
       systemPrompt,
       userPrompt,
       tools: [],
       executeTool: async () => ({}),
       maxSteps: 2,
+      context: { taskName: "tanjia_agent", hasTools: false, inputLength: body.ownerMessage.length, userText: body.ownerMessage },
     });
 
     const parsedOptions = parseOptions(content)

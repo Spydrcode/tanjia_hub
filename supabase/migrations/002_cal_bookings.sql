@@ -24,6 +24,7 @@ create index if not exists lead_bookings_cal_booking_id_idx on public.lead_booki
 
 alter table public.lead_bookings enable row level security;
 
+drop policy if exists "Users manage their bookings" on public.lead_bookings;
 create policy "Users manage their bookings" on public.lead_bookings
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);

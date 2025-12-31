@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { runLeadIntelligence } from "@/lib/agents/tanjia-orchestrator";
-import { tanjiaServerConfig } from "@/lib/tanjia-config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { tanjiaServerConfig } from "@/lib/tanjia-config";
 import { runAgent } from "@/src/lib/agents/runtime";
 
 const RequestSchema = z.object({
@@ -107,30 +107,42 @@ Return only JSON. No bullets or prose outside JSON.
 `.trim();
 
   try {
-    const { content, trace } = await runAgent({
-      model: tanjiaServerConfig.agentModelSmall,
+    const { content, trace, parsed, _meta } = await runAgent({
       systemPrompt,
       userPrompt,
       tools: [],
       maxSteps: 1,
       executeTool: async () => ({}),
+      context: {
+        taskName: "followup_plan",
+        hasTools: false,
+        inputLength: body.what_they_said.length + (body.notes?.length || 0),
+        userText: body.what_they_said,
+        schemaName: "followup_plan",
+      },
+      validate: (raw) => {
+        try {
+          const json = JSON.parse(raw || "{}");
+          const safe = PlanSchema.parse(json);
+          return { ok: true, parsed: safe };
+        } catch (err: any) {
+          return { ok: false, reason: err?.message || "parse_failed" };
+        }
+      },
     });
 
-    let parsed: z.infer<typeof PlanSchema> | null = null;
-    try {
-      const json = JSON.parse(content || "{}");
-      const safe = PlanSchema.parse(json);
-      parsed = {
+    let parsedPlan: z.infer<typeof PlanSchema> | null = null;
+    if (parsed) {
+      const safe = parsed as z.infer<typeof PlanSchema>;
+      parsedPlan = {
         next_action: normalize(safe.next_action),
         log_note: normalize(safe.log_note),
         followups: safe.followups.map((f) => ({ when: normalize(f.when), text: normalize(f.text) })),
       };
-    } catch {
-      parsed = null;
     }
 
-    if (!parsed) {
-      parsed = {
+    if (!parsedPlan) {
+      parsedPlan = {
         next_action: normalize("Send a short check-in referencing their update; ask if they want a calm 2nd Look."),
         log_note: normalize("Shared update acknowledged; waiting for permission to review."),
         followups: [
@@ -141,7 +153,7 @@ Return only JSON. No bullets or prose outside JSON.
     }
 
     const traceId = await saveTrace({
-      plan: parsed,
+      plan: parsedPlan,
       leadId: body.leadId,
       ownerId: user?.id ?? null,
       trace: trace
@@ -153,11 +165,41 @@ Return only JSON. No bullets or prose outside JSON.
             searches_run: trace.searches_run,
             start: trace.start,
             end: trace.end,
+            _meta,
           }
         : undefined,
     });
 
-    return NextResponse.json({ ...parsed, traceId: traceId || null });
+    const clientReason = "Keeps follow-ups light, tied to what was shared, and ends with a calm option to pause or accept a 2nd Look.";
+    const internalReason = `Uses their note (${body.what_they_said.slice(0, 80)}${body.what_they_said.length > 80 ? "..." : ""})${leadContext ? " plus lead context" : ""}; keeps cadence gentle and optional.`;
+
+    const mentorOptions = [
+      {
+        label: "Hold (no action)",
+        why: "Respect their pace and avoid crowding while they process.",
+        message: null,
+      },
+      {
+        label: "Light check-in",
+        why: "Acknowledges their update and leaves room for them to reply when ready.",
+        message: "Noticed your note—want me to keep an eye on it, or pause for now?",
+      },
+      {
+        label: "Offer a 2nd Look",
+        why: "Gives a calm, permission-based offer without pressure.",
+        message: `If useful, I can share a quick 2nd Look on what you mentioned. If not, all good. ${tanjiaServerConfig.secondLookUrl || ""}`.trim(),
+      },
+    ];
+
+    return NextResponse.json({
+      ...parsedPlan,
+      mentor_options: mentorOptions,
+      traceId: traceId || null,
+      reasoning: {
+        internal: internalReason,
+        client: clientReason,
+      },
+    });
   } catch (error) {
     console.error("[tanjia][followup-plan] error", error);
     return NextResponse.json({ error: "Unable to plan right now." }, { status: 500 });

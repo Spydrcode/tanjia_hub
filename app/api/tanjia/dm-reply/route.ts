@@ -23,8 +23,7 @@ type LiteResearch = {
 async function runLiteResearch(input: { message: string; notes?: string | null }) {
   const collected: string[] = [];
 
-  const { content, trace } = await runAgent({
-    model: tanjiaServerConfig.agentModelSmall,
+  const { content, trace, _meta } = await runAgent({
     systemPrompt: `
 You are gathering quick public context before writing a DM.
 - Use tools only if needed; keep to 1-2 calls.
@@ -53,6 +52,7 @@ Notes: ${input.notes?.trim() || "None"}
       }
       return {};
     },
+    context: { taskName: "dm_research", hasTools: true, inputLength: input.message.length, userText: input.message },
   });
 
   let parsed: LiteResearch = { insights: [], traceId: null };
@@ -66,7 +66,7 @@ Notes: ${input.notes?.trim() || "None"}
   return {
     insights: parsed.insights.slice(0, 3),
     traceId: trace?.start ? trace.start : null,
-    trace,
+    trace: trace ? { ...trace, _meta } : undefined,
   };
 }
 
@@ -202,14 +202,14 @@ Return only the DM text. No bullets. Stay human and light.
 `.trim();
 
   try {
-    const { content, trace } = await runAgent({
-      model: tanjiaServerConfig.agentModelSmall,
-      systemPrompt,
-      userPrompt,
-      tools: [],
-      maxSteps: 1,
-      executeTool: async () => ({}),
-    });
+  const { content, trace, _meta } = await runAgent({
+    systemPrompt,
+    userPrompt,
+    tools: [],
+    maxSteps: 1,
+    executeTool: async () => ({}),
+    context: { taskName: "dm_reply", hasTools: false, inputLength: body.what_they_said.length, userText: body.what_they_said },
+  });
 
     let text = limitSentences(clean(content || ""));
     if (text.length > 320) {
@@ -238,12 +238,23 @@ Return only the DM text. No bullets. Stay human and light.
               searches_run: trace.searches_run,
               start: trace.start,
               end: trace.end,
+              _meta,
             }
           : undefined,
         metadata: contextSummary ? { contextSummary } : undefined,
       }));
 
-    return NextResponse.json({ text, traceId: savedTraceId || null });
+    const clientReason = `Keeps to ${text.split(/\s+/).length <= 35 ? "a short " : ""}DM that echoes their note and offers help only if welcome.`;
+    const internalReason = `Reflects their post (${body.what_they_said.slice(0, 100)}${body.what_they_said.length > 100 ? "..." : ""})${contextSummary ? "; used gathered context without naming tools" : ""}; capped at 3 sentences.`;
+
+    return NextResponse.json({
+      text,
+      traceId: savedTraceId || null,
+      reasoning: {
+        internal: internalReason,
+        client: clientReason,
+      },
+    });
   } catch (error) {
     console.error("[tanjia][dm-reply] error", error);
     return NextResponse.json({ error: "Unable to draft right now." }, { status: 500 });

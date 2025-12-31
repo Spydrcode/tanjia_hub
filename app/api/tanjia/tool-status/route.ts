@@ -49,11 +49,13 @@ export async function GET() {
     return NextResponse.json(cached.payload, { status: 200 });
   }
 
-  const [db, commentRoute, dmRoute, followupRoute] = await Promise.all([
+  const [db, commentRoute, dmRoute, followupRoute, primaryAimRoute, emythRunRoute] = await Promise.all([
     checkSupabase(),
     checkRoute("/api/tanjia/comment-reply"),
     checkRoute("/api/tanjia/dm-reply"),
     checkRoute("/api/tanjia/followup-plan"),
+    checkRoute("/api/tanjia/emyth/primary-aim"),
+    checkRoute("/api/tanjia/emyth/run"),
   ]);
 
   const items: StatusItem[] = [
@@ -64,6 +66,8 @@ export async function GET() {
     { id: "comment-reply", label: "Comment reply", status: commentRoute.status, detail: commentRoute.detail },
     { id: "dm-reply", label: "DM reply", status: dmRoute.status, detail: dmRoute.detail },
     { id: "followup-plan", label: "Follow-up plan", status: followupRoute.status, detail: followupRoute.detail },
+    { id: "emyth-primary-aim", label: "E-Myth primary aim", status: primaryAimRoute.status, detail: primaryAimRoute.detail },
+    { id: "emyth-run", label: "E-Myth run", status: emythRunRoute.status, detail: emythRunRoute.detail },
   ];
 
   const payload = { updatedAt: new Date().toISOString(), items };

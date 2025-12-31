@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { tanjiaServerConfig } from "@/lib/tanjia-config";
 import { toolFetchPublicPage, toolWebSearch } from "@/src/lib/agents/tools";
 import { runAgent } from "@/src/lib/agents/runtime";
 import { ensureHttpsUrl } from "@/src/lib/env";
@@ -118,11 +117,11 @@ export async function POST(req: NextRequest) {
   const { systemPrompt, userPrompt } = buildPrompt({ ...body, website: normalizedWebsite }, snippets, snippetSources);
 
   const agentResult = await runAgent({
-    model: tanjiaServerConfig.agentModelSmall,
     systemPrompt,
     userPrompt,
     tools: [],
     executeTool: async () => null,
+    context: { taskName: "lead_enrich", hasTools: false, inputLength: userPrompt.length, schemaName: "lead_enrich", userText: body.notes || "" },
   });
 
   const parsed =
