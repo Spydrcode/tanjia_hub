@@ -3,11 +3,7 @@ import { tanjiaConfig } from "@/lib/tanjia-config";
 import { requireAuthOrRedirect } from "@/lib/auth/redirect";
 import { featureFlags } from "@/src/lib/env";
 import { demoFollowups, demoLeads } from "@/lib/demo-data";
-import DashboardClient, {
-  FollowupSummary,
-  LeadSummary,
-  MeetingSummary,
-} from "./dashboard-client";
+import DashboardClient, { FollowupSummary, LeadSummary, MeetingSummary } from "./dashboard-client";
 
 const pageTitle = "Tanjia - Networking for 2ndmynd";
 const pageDescription =
@@ -138,7 +134,6 @@ async function TanjiaContent() {
     <DashboardClient
       description={pageDescription}
       nextMeeting={meetingSummaries[0]}
-      upcomingMeetings={meetingSummaries}
       followupsDue={followupsDue}
       leads={leadSummaries}
       siteUrl={tanjiaConfig.siteUrl}

@@ -9,8 +9,14 @@ import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
 import { useToast } from "@/src/components/ui/toast";
 import { SensitiveText } from "@/src/components/ui/sensitive-text";
+import { useViewModes } from "@/src/components/ui/view-modes";
 
-type AgentResponse = { options: string[] };
+type AgentResponse = { text: string; traceId: string | null };
+type FollowupResponse = { next_action: string; log_note: string; followups: { when: string; text: string }[]; traceId: string | null };
+type ResultState =
+  | { kind: "message"; data: AgentResponse }
+  | { kind: "followup"; data: FollowupResponse }
+  | null;
 
 const channelOptions: ChannelType[] = ["comment", "dm", "followup"];
 const intentOptions: IntentType[] = ["reflect", "invite", "schedule", "encourage"];
@@ -31,38 +37,55 @@ export default function HelperClient({ cal15Url, cal30Url, initialLeadId, initia
   const [leadName, setLeadName] = useState(initialLeadName || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [results, setResults] = useState<string[]>([]);
+  const [result, setResult] = useState<ResultState>(null);
+  const [lastChannel, setLastChannel] = useState<ChannelType>("dm");
   const showToast = useToast();
+  const { presentationMode, explainMode } = useViewModes();
 
   const isDisabled = useMemo(() => loading || ownerMessage.trim().length === 0, [loading, ownerMessage]);
 
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
-    setResults([]);
+    setResult(null);
     try {
-      const response = await fetch("/api/tanjia-agent", {
+      const endpoint =
+        channel === "comment"
+          ? "/api/tanjia/comment-reply"
+          : channel === "dm"
+            ? "/api/tanjia/dm-reply"
+            : "/api/tanjia/followup-plan";
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           channel,
           intent,
-          ownerMessage: ownerMessage.trim(),
-          contextNotes: contextNotes.trim() || undefined,
-          leadId: leadId.trim() || undefined,
+          what_they_said: ownerMessage.trim(),
+          notes: contextNotes.trim() || null,
+          leadId: leadId.trim() || null,
         }),
       });
 
-      const data = (await response.json().catch(() => null)) as AgentResponse | null;
+      const data = (await response.json().catch(() => null)) as AgentResponse | FollowupResponse | null;
       if (!response.ok) {
         const message = (data as { error?: string } | null)?.error || "Something went wrong.";
         throw new Error(message);
       }
 
-      if (!data || !data.options || data.options.length === 0) {
-        throw new Error("No options returned. Try again.");
+      if (!data) {
+        throw new Error("No draft returned. Try again.");
       }
-      setResults(data.options);
+      if (channel === "followup") {
+        const followup = data as FollowupResponse;
+        if (!followup.next_action || !followup.followups) throw new Error("No plan returned. Try again.");
+        setResult({ kind: "followup", data: followup });
+      } else {
+        const message = data as AgentResponse;
+        if (!message.text) throw new Error("No draft returned. Try again.");
+        setResult({ kind: "message", data: message });
+      }
+      setLastChannel(channel);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to generate right now.";
       setError(message);
@@ -77,8 +100,9 @@ export default function HelperClient({ cal15Url, cal30Url, initialLeadId, initia
     setIntent("reflect");
     setOwnerMessage("");
     setContextNotes("");
-    setResults([]);
+    setResult(null);
     setError(null);
+    setLastChannel("dm");
     showToast("Reset", "default");
   };
 
@@ -89,12 +113,6 @@ export default function HelperClient({ cal15Url, cal30Url, initialLeadId, initia
     } catch {
       setError("Could not copy. Please try manually.");
     }
-  };
-
-  const shorten = (text: string) => {
-    const firstSentence = text.split(". ")[0] || text;
-    const trimmed = firstSentence.trim();
-    return trimmed.length > 180 ? `${trimmed.slice(0, 180)}...` : trimmed;
   };
 
   const clearLead = () => {
@@ -118,16 +136,26 @@ export default function HelperClient({ cal15Url, cal30Url, initialLeadId, initia
       <Card>
         <CardContent className="space-y-4 p-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="flex flex-col gap-2 text-sm text-neutral-700">
+            <div className="flex flex-col gap-2 text-sm text-neutral-700">
               <span className="text-xs font-medium uppercase tracking-[0.08em] text-neutral-500">Channel</span>
-              <Select value={channel} onChange={(e) => setChannel(e.target.value as ChannelType)} aria-label="Channel">
-                {channelOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </Select>
-            </label>
+              <div className="flex gap-2">
+                {channelOptions.map((option) => {
+                  const active = channel === option;
+                  return (
+                    <Button
+                      key={option}
+                      type="button"
+                      variant={active ? "default" : "secondary"}
+                      size="sm"
+                      className="flex-1 uppercase tracking-[0.08em]"
+                      onClick={() => setChannel(option)}
+                    >
+                      {option}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
 
             <label className="flex flex-col gap-2 text-sm text-neutral-700">
               <span className="text-xs font-medium uppercase tracking-[0.08em] text-neutral-500">Intent</span>
@@ -174,7 +202,7 @@ export default function HelperClient({ cal15Url, cal30Url, initialLeadId, initia
           <div className="sticky bottom-0 flex flex-col gap-3 bg-white/70 pb-2 pt-1 backdrop-blur sm:static sm:bg-transparent sm:p-0 sm:backdrop-blur-0">
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button type="button" onClick={handleSubmit} disabled={isDisabled} className="w-full sm:w-auto">
-                {loading ? "Generating..." : "Generate options"}
+                {loading ? "Generating..." : "Generate"}
               </Button>
               <Button type="button" onClick={handleReset} variant="secondary" className="w-full sm:w-auto">
                 Reset
@@ -191,27 +219,75 @@ export default function HelperClient({ cal15Url, cal30Url, initialLeadId, initia
         </p>
       ) : null}
 
-      {results.length > 0 && (
+      {result?.kind === "message" && (
         <Card>
           <CardContent className="space-y-3 p-4">
-            <p className="text-sm text-neutral-600">Pick what fits. Edit freely.</p>
-            {results.map((option, index) => (
-              <div key={index} className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm leading-6 text-neutral-800">
-                    <SensitiveText text={option} mask="message" />
-                  </p>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" variant="ghost" onClick={() => handleCopy(option)}>
-                    Copy
-                  </Button>
-                  <Button size="sm" variant="secondary" onClick={() => handleCopy(shorten(option))}>
-                    Shorten
-                  </Button>
-                </div>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-neutral-600">
+                {lastChannel === "comment" ? "Public comment" : lastChannel === "dm" ? "Direct message" : "Follow-up"}
+              </p>
+              {!presentationMode && explainMode && result.data.traceId ? (
+                <span className="text-xs text-neutral-500">Trace: {result.data.traceId}</span>
+              ) : null}
+            </div>
+            <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+              <p className="text-sm leading-6 text-neutral-800">
+                <SensitiveText text={result.data.text} mask="message" />
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button size="sm" variant="secondary" onClick={() => handleCopy(result.data.text)}>
+                  Copy
+                </Button>
               </div>
-            ))}
+              {!presentationMode && explainMode ? (
+                <p className="mt-2 text-xs text-neutral-500">Trace stored internally {result.data.traceId ? `(id: ${result.data.traceId})` : ""}.</p>
+              ) : null}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {result?.kind === "followup" && (
+        <Card>
+          <CardContent className="space-y-4 p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-neutral-600">Follow-up plan</p>
+              {!presentationMode && explainMode && result.data.traceId ? (
+                <span className="text-xs text-neutral-500">Trace: {result.data.traceId}</span>
+              ) : null}
+            </div>
+            <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-neutral-500">Next action</p>
+              <p className="text-sm leading-6 text-neutral-800">{result.data.next_action}</p>
+            </div>
+            <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-neutral-500">Log note</p>
+              <p className="text-sm leading-6 text-neutral-800">{result.data.log_note}</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {result.data.followups.map((item, idx) => (
+                <div key={`${item.when}-${idx}`} className="rounded-lg border border-neutral-200 bg-white p-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-neutral-500">{item.when}</p>
+                  <p className="text-sm leading-6 text-neutral-800">{item.text}</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="secondary" onClick={() => handleCopy(result.data.next_action)}>
+                Copy next action
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() =>
+                  handleCopy(
+                    `${result.data.next_action}\nLog: ${result.data.log_note}\nFollowups:\n${result.data.followups.map((f) => `- ${f.when}: ${f.text}`).join("\n")}`,
+                  )
+                }
+              >
+                Copy plan
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

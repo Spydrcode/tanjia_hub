@@ -45,16 +45,6 @@ export default async function TanjiaLayout({ children }: { children: React.React
               </div>
               <div className="flex items-center gap-2">
                 {isAuth ? <ViewModeControls showCopyLink /> : null}
-                <Button asChild variant="secondary" size="sm">
-                  <Link href="/tanjia/helper" aria-label="Open helper">
-                    Helper
-                  </Link>
-                </Button>
-                <Button asChild variant="secondary" size="sm">
-                  <Link href="/tanjia/scheduler" aria-label="Open scheduler">
-                    Scheduler
-                  </Link>
-                </Button>
                 {isAuth ? (
                   <form action={signOutAction}>
                     <Button type="submit" variant="ghost" size="sm" aria-label="Logout">
@@ -68,17 +58,11 @@ export default async function TanjiaLayout({ children }: { children: React.React
               <Link href="/tanjia" className="text-sm font-medium text-neutral-800 hover:text-neutral-950">
                 Dashboard
               </Link>
-              <Link href="/tanjia/leads" className="text-sm font-medium text-neutral-800 hover:text-neutral-950">
-                Leads
+              <Link href="/tanjia/tools/helper" className="text-sm font-medium text-neutral-800 hover:text-neutral-950">
+                Tools
               </Link>
-              <Link href="/tanjia/followups" className="text-sm font-medium text-neutral-800 hover:text-neutral-950">
-                Follow-ups
-              </Link>
-              <Link href="/tanjia/meetings" className="text-sm font-medium text-neutral-800 hover:text-neutral-950">
-                Meetings
-              </Link>
-              <Link href="/tanjia/system-overview" className="text-sm font-medium text-neutral-800 hover:text-neutral-950">
-                System overview
+              <Link href="/tanjia/presentation" className="text-sm font-medium text-neutral-800 hover:text-neutral-950">
+                Presentation
               </Link>
             </div>
           </div>
