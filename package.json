@@ -15,12 +15,13 @@
     "@calcom/sdk": "^1.0.1",
     "@pinecone-database/pinecone": "^4.1.0",
     "@radix-ui/react-slot": "^1.1.0",
-    "lucide-react": "^0.464.0",
     "@supabase/ssr": "^0.5.0",
     "@supabase/supabase-js": "^2.47.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "dotenv": "^17.2.3",
     "framer-motion": "^12.23.26",
+    "lucide-react": "^0.464.0",
     "motion-dom": "^12.23.23",
     "next": "16.1.1",
     "openai": "^4.77.4",
@@ -36,9 +37,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
-    "tsx": "^4.19.2",
     "supabase": "^2.70.5",
     "tailwindcss": "^4",
+    "tsx": "^4.19.2",
     "typescript": "^5"
   }
 }
