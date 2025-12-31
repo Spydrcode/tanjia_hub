@@ -19,20 +19,20 @@ export default function PresentationClient({ secondLookUrl }: Props) {
   return (
     <div className="flex flex-col gap-6">
       <div
-        className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 p-5 text-white shadow-lg"
+        className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-gradient-to-br from-neutral-900 via-neutral-850 to-neutral-900 p-4 text-white shadow-sm"
         data-tour="client-safe"
       >
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.15),transparent_45%),radial-gradient(circle_at_bottom_right,_rgba(255,255,255,0.12),transparent_35%)]" />
-        <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <GradientHeading leading="Presentation" className="text-2xl font-semibold text-white" />
-            <p className="text-sm text-neutral-100">{presentationMode ? "Mask on - client-safe" : "Mask off - internal view"}</p>
-          </div>
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.08),transparent_45%),radial-gradient(circle_at_bottom_right,_rgba(255,255,255,0.08),transparent_35%)]" />
+        <div className="relative flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Button size="sm" variant={presentationMode ? "secondary" : "primary"} onClick={togglePresentation} className="bg-white text-neutral-900 hover:bg-neutral-100">
-              {presentationMode ? "Disable mask" : "Enable mask"}
-            </Button>
+            <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-white">
+              Presentation
+            </span>
+            <p className="text-sm text-neutral-100">{presentationMode ? "Mask on" : "Mask off"}</p>
           </div>
+          <Button size="sm" variant={presentationMode ? "secondary" : "primary"} onClick={togglePresentation} className="bg-white text-neutral-900 hover:bg-neutral-100">
+            {presentationMode ? "Disable mask" : "Enable mask"}
+          </Button>
         </div>
       </div>
 
