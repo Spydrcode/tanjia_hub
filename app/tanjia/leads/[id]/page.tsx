@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { format } from "date-fns";
 import LeadDetailClient from "./client";
+import { DangerZone } from "./danger-zone";
 import {
   runLeadIntelligenceAction,
   createFollowup,
@@ -9,11 +11,14 @@ import {
   saveMessageDraft,
   markFollowupDone,
   snoozeFollowup,
+  deleteLead,
 } from "../actions";
 import { tanjiaConfig } from "@/lib/tanjia-config";
 import { featureFlags } from "@/src/lib/env";
 import { demoLeads, demoFollowups } from "@/lib/demo-data";
 import { requireAuthOrRedirect } from "@/lib/auth/redirect";
+import { PageShell } from "@/src/components/ui/page-shell";
+import { IntentHeader } from "@/src/components/ui/intent-header";
 import { PageHeader } from "@/src/components/ui/page-header";
 
 export const metadata: Metadata = {
@@ -49,8 +54,8 @@ type Followup = {
   done?: boolean | null;
 };
 
-export default async function LeadDetailPage({ params }: { params: { id: string } }) {
-  const leadId = params.id;
+export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: leadId } = await params;
   const { supabase } = await requireAuthOrRedirect();
   const isDemo = featureFlags.showcaseMode;
 
@@ -177,22 +182,20 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
   if ((activeLead as any).name) schedulerParams.set("leadName", (activeLead as any).name);
   if ((activeLead as any).email) schedulerParams.set("leadEmail", (activeLead as any).email);
   const schedulerHref = `/tanjia/scheduler?${schedulerParams.toString()}`;
+  const lastRunLabel = latestSnapshot?.created_at
+    ? `Last run ${format(new Date(latestSnapshot.created_at), "MMM d, h:mma")}`
+    : "No runs yet.";
 
   return (
-    <div className="flex flex-col gap-6 pb-12">
-      <PageHeader
+    <PageShell maxWidth="lg">
+      <IntentHeader
+        badge="Operator only"
+        badgeVariant="operator"
         title={(activeLead as any).name || "Lead"}
-        description="Capture, run, use, follow-up."
-        actionLabel="Back to leads"
-        actionHref="/tanjia/leads"
-        actionVariant="ghost"
-      >
-        <p className="text-xs text-neutral-500">
-          {latestSnapshot?.created_at
-            ? `Last run ${format(new Date(latestSnapshot.created_at), "MMM d, h:mma")}`
-            : "No runs yet."}
-        </p>
-      </PageHeader>
+        subtitle={lastRunLabel}
+        backHref="/tanjia/leads"
+        backLabel="Back to Leads"
+      />
 
       <LeadDetailClient
         leadId={leadId}
@@ -218,6 +221,10 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         onSnoozeFollowup={snooze}
         onUpdateStatus={setStatus}
       />
-    </div>
+
+      {!isDemo && (
+        <DangerZone leadId={leadId} onDeleteAction={deleteLead} />
+      )}
+    </PageShell>
   );
 }

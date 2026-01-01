@@ -110,3 +110,44 @@ export async function snoozeFollowup(followupId: string, days: number) {
   await supabase.from("followups").update({ due_at: current.toISOString() }).eq("id", followupId);
   revalidatePath("/tanjia/followups");
 }
+
+export async function deleteLead(leadId: string): Promise<{ success: boolean; error?: string }> {
+  const { supabase, user } = await requireAuthOrRedirect();
+
+  // Verify the lead belongs to the authenticated user
+  const { data: lead, error: leadError } = await supabase
+    .from("leads")
+    .select("id")
+    .eq("id", leadId)
+    .eq("owner_id", user.id)
+    .single();
+
+  if (leadError || !lead) {
+    return { success: false, error: "Lead not found or access denied." };
+  }
+
+  // Delete dependent records safely (order matters for FK constraints)
+  // 1. Delete followups
+  await supabase.from("followups").delete().eq("lead_id", leadId);
+
+  // 2. Delete messages
+  await supabase.from("messages").delete().eq("lead_id", leadId);
+
+  // 3. Delete lead_snapshots (if table exists)
+  await supabase.from("lead_snapshots").delete().eq("lead_id", leadId);
+
+  // 4. Delete the lead
+  const { error: deleteError } = await supabase
+    .from("leads")
+    .delete()
+    .eq("id", leadId)
+    .eq("owner_id", user.id);
+
+  if (deleteError) {
+    return { success: false, error: "Could not delete." };
+  }
+
+  revalidatePath("/tanjia/leads");
+  revalidatePath("/tanjia/followups");
+  return { success: true };
+}

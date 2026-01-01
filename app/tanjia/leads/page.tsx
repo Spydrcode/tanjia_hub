@@ -7,17 +7,19 @@ import { demoFollowups, demoLeads } from "@/lib/demo-data";
 import { Badge } from "@/src/components/ui/badge";
 import { Card, CardContent } from "@/src/components/ui/card";
 import { SensitiveText } from "@/src/components/ui/sensitive-text";
-import { PageHeader } from "@/src/components/ui/page-header";
-import { ExplainHint } from "@/src/components/ui/explain-hint";
+import { PageShell } from "@/src/components/ui/page-shell";
+import { IntentHeader } from "@/src/components/ui/intent-header";
+import { Button } from "@/src/components/ui/button";
 import LeadsFilters from "./filters";
+import { LeadRow } from "@/app/tanjia/leads/lead-row";
 
 export const metadata: Metadata = {
-  title: "Tanjia Leads",
-  description: "Leads you are tracking.",
+  title: "Leads - Tanjia",
+  description: "Your leads and signals.",
   robots: { index: false, follow: false },
 };
 
-type LeadRow = {
+type LeadRowType = {
   id: string;
   name: string;
   website?: string | null;
@@ -26,13 +28,14 @@ type LeadRow = {
   created_at?: string | null;
 };
 
-export default async function LeadsPage({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
+export default async function LeadsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { supabase } = await requireAuthOrRedirect();
-  const q = typeof searchParams.q === "string" ? searchParams.q : "";
-  const statusFilter = typeof searchParams.status === "string" ? searchParams.status : "all";
-  const snapshotFilter = typeof searchParams.snapshot === "string" ? searchParams.snapshot : "any";
+  const params = await searchParams;
+  const q = typeof params.q === "string" ? params.q : "";
+  const statusFilter = typeof params.status === "string" ? params.status : "all";
+  const snapshotFilter = typeof params.snapshot === "string" ? params.snapshot : "any";
 
-  const leads: LeadRow[] = featureFlags.showcaseMode
+  const leads: LeadRowType[] = featureFlags.showcaseMode
     ? demoLeads
     : (
         await supabase
@@ -92,21 +95,28 @@ export default async function LeadsPage({ searchParams }: { searchParams: Record
   });
 
   return (
-    <div className="flex flex-col gap-6 pb-12">
-      <PageHeader
-        title="Leads"
+    <PageShell maxWidth="lg">
+      <IntentHeader
+        badge="Operator only"
+        badgeVariant="operator"
+        title="Your"
         anchor="Signals"
-        eyebrow="Tanjia"
-        description="Scan quickly, then open the lead you need."
-        actionHref="/tanjia/leads/new"
-        actionLabel="New lead"
-      >
-        <div className="pt-1">
-          <ExplainHint target="lead.detail" />
-        </div>
-      </PageHeader>
+        subtitle="Scan quickly, open one lead, then return to Listen."
+      />
 
-      <Card className="border-white/70 bg-white/90 shadow-md ring-1 ring-neutral-100 backdrop-blur">
+      <div className="flex items-center gap-3">
+        <Button asChild size="sm">
+          <Link href="/tanjia/leads/new">New lead</Link>
+        </Button>
+        <Link
+          href="/tanjia/explore"
+          className="rounded-md bg-neutral-100 px-3 py-1.5 text-xs font-medium text-neutral-700 transition hover:bg-neutral-200"
+        >
+          Go to Listen
+        </Link>
+      </div>
+
+      <Card className="border-neutral-200 bg-white shadow-sm">
         <CardContent className="flex flex-col gap-4 p-4 sm:p-5">
           <LeadsFilters status={statusFilter} snapshot={snapshotFilter} q={q} />
 
@@ -115,39 +125,23 @@ export default async function LeadsPage({ searchParams }: { searchParams: Record
               {filtered.map((lead) => {
                 const lastRun = lastSnapshotMap.get(lead.id);
                 const nextDue = nextFollowupMap.get(lead.id);
-                const host = lead.website ? lead.website.replace(/^https?:\/\//, "").split("/")[0] : "";
                 return (
-                  <Link
+                  <LeadRow
                     key={lead.id}
-                    href={`/tanjia/leads/${lead.id}`}
-                    className="flex flex-col gap-2 py-3 transition hover:bg-neutral-50"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex flex-col gap-1">
-                        <p className="text-base font-semibold text-neutral-900">
-                          <SensitiveText text={lead.name} id={lead.id} />
-                        </p>
-                        {host ? <p className="text-xs text-neutral-500">{host}</p> : null}
-                      </div>
-                      <Badge variant="muted">{lead.status || "new"}</Badge>
-                    </div>
-                    <div className="flex flex-wrap gap-4 text-xs text-neutral-600">
-                      <span>Last run: {lastRun ? format(new Date(lastRun), "MMM d, h:mma") : "Not yet"}</span>
-                      <span>
-                        Next follow-up: {nextDue ? format(new Date(nextDue), "MMM d, h:mma") : "None"}
-                      </span>
-                    </div>
-                  </Link>
+                    lead={lead}
+                    lastRun={lastRun}
+                    nextDue={nextDue}
+                  />
                 );
               })}
             </div>
           ) : (
-            <div className="rounded-lg border border-dashed border-neutral-200 p-6 text-sm text-neutral-700">
+            <div className="rounded-lg border border-dashed border-neutral-200 p-6 text-center text-sm text-neutral-600">
               No leads match this view. Try clearing filters or adding a lead.
             </div>
           )}
         </CardContent>
       </Card>
-    </div>
+    </PageShell>
   );
 }

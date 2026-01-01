@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { requireAuthOrRedirect } from "@/lib/auth/redirect";
 import { featureFlags } from "@/src/lib/env";
 import { demoFollowups, demoLeads } from "@/lib/demo-data";
-import { PageHeader } from "@/src/components/ui/page-header";
+import { PageShell } from "@/src/components/ui/page-shell";
+import { IntentHeader } from "@/src/components/ui/intent-header";
 import FollowupsClient from "./client";
 import { markFollowupDone, snoozeFollowup } from "../leads/actions";
 
@@ -55,13 +56,13 @@ export default async function FollowupsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 pb-12">
-      <PageHeader
-        title="Follow-ups"
+    <PageShell maxWidth="lg">
+      <IntentHeader
+        badge="Operator only"
+        badgeVariant="operator"
+        title="Follow-up"
         anchor="Queue"
-        eyebrow="Tanjia"
-        description="What is due today and next."
-        size="lg"
+        subtitle="What is due today and next."
       />
       <FollowupsClient
         followups={items.map((item) => ({
@@ -71,6 +72,6 @@ export default async function FollowupsPage() {
         onMarkDone={markDone}
         onSnooze={snooze}
       />
-    </div>
+    </PageShell>
   );
 }

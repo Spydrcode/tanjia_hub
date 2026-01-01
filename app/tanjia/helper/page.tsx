@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import HelperClient from "./helper-client";
 import { tanjiaConfig } from "@/lib/tanjia-config";
-import { PageHeader } from "@/src/components/ui/page-header";
+import { PageShell } from "@/src/components/ui/page-shell";
+import { IntentHeader } from "@/src/components/ui/intent-header";
 import { requireAuthOrRedirect } from "@/lib/auth/redirect";
 import { demoLeads } from "@/lib/demo-data";
 import { featureFlags } from "@/src/lib/env";
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function TanjiaHelperPage({ searchParams }: { searchParams?: { leadId?: string } }) {
+export default async function TanjiaHelperPage({ searchParams }: { searchParams?: Promise<{ leadId?: string }> }) {
   const params = await searchParams;
   const leadId = params?.leadId;
   let leadName: string | undefined;
@@ -43,13 +44,13 @@ export default async function TanjiaHelperPage({ searchParams }: { searchParams?
   }
 
   return (
-    <div className="flex flex-col gap-6 pb-12">
-      <PageHeader
-        title="Message reply"
-        anchor="Helper"
-        eyebrow="Tanjia"
-        description="Calm replies in under a minute. Use only what feels true."
-        size="lg"
+    <PageShell maxWidth="lg">
+      <IntentHeader
+        badge="Operator only"
+        badgeVariant="operator"
+        title="Draft"
+        anchor="Reply"
+        subtitle="Calm replies in under a minute. Use only what feels true."
       />
       <HelperClient
         cal15Url={tanjiaConfig.calEvent15Url}
@@ -58,6 +59,6 @@ export default async function TanjiaHelperPage({ searchParams }: { searchParams?
         initialLeadName={leadName}
         emythHints={emythHints}
       />
-    </div>
+    </PageShell>
   );
 }
