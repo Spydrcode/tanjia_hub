@@ -15,7 +15,7 @@ type Lead = {
 };
 
 type Channel = "comment" | "dm" | "followup";
-type Intent = "reflect" | "invite" | "schedule" | "encourage";
+type Intent = "reply" | "invite" | "support" | "nurture" | "clarify";
 
 type Props = {
   leads: Lead[];
@@ -40,16 +40,17 @@ const channelConfig: Record<Channel, { label: string; icon: typeof MessageSquare
 };
 
 const intentLabels: Record<Intent, string> = {
-  reflect: "Reflect what you heard",
+  reply: "Reply to what they said",
   invite: "Invite next step",
-  schedule: "Suggest a meeting",
-  encourage: "Encourage & support",
+  support: "Offer support",
+  nurture: "Nurture relationship",
+  clarify: "Clarify understanding",
 };
 
 export function SupportClient({ leads }: Props) {
   const [selectedLeadId, setSelectedLeadId] = useState<string>("");
   const [channel, setChannel] = useState<Channel>("comment");
-  const [intent, setIntent] = useState<Intent>("reflect");
+  const [intent, setIntent] = useState<Intent>("reply");
   const [inputText, setInputText] = useState("");
   const [notes, setNotes] = useState("");
   const [draft, setDraft] = useState<string | null>(null);

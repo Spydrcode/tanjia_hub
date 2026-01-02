@@ -38,7 +38,7 @@ type ResultState =
   | null;
 
 const channelOptions: ChannelType[] = ["comment", "dm", "followup"];
-const intentOptions: IntentType[] = ["reflect", "invite", "schedule", "encourage"];
+const intentOptions: IntentType[] = ["reply", "invite", "support", "nurture", "clarify"];
 
 type Props = {
   cal15Url: string;
@@ -50,7 +50,7 @@ type Props = {
 
 export default function HelperClient({ cal15Url, cal30Url, initialLeadId, initialLeadName, emythHints }: Props) {
   const [channel, setChannel] = useState<ChannelType>("dm");
-  const [intent, setIntent] = useState<IntentType>("reflect");
+  const [intent, setIntent] = useState<IntentType>("reply");
   const [ownerMessage, setOwnerMessage] = useState("");
   const [contextNotes, setContextNotes] = useState("");
   const [leadId, setLeadId] = useState(initialLeadId || "");
@@ -118,7 +118,7 @@ export default function HelperClient({ cal15Url, cal30Url, initialLeadId, initia
 
   const handleReset = () => {
     setChannel("dm");
-    setIntent("reflect");
+    setIntent("reply");
     setOwnerMessage("");
     setContextNotes("");
     setResult(null);

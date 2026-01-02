@@ -43,4 +43,4 @@ export const tanjiaServerConfig = {
 export const tanjiaConfig = tanjiaPublicConfig;
 
 export type ChannelType = "comment" | "dm" | "followup";
-export type IntentType = "reflect" | "invite" | "schedule" | "encourage";
+export type IntentType = "reply" | "invite" | "support" | "nurture" | "clarify";

@@ -6,7 +6,7 @@ import { generateReply } from "@/src/lib/tanjia/reply-helper";
 
 const RequestSchema = z.object({
   channel: z.literal("comment"),
-  intent: z.enum(["reflect", "invite", "schedule", "encourage"]).optional(),
+  intent: z.enum(["reply", "invite", "support", "nurture", "clarify"]).optional(),
   what_they_said: z.string().min(1),
   notes: z.string().nullable().optional(),
   leadId: z.string().nullable().optional(),

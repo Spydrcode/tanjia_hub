@@ -12,6 +12,9 @@ const RequestSchema = z.object({
   leadId: z.string().nullable().optional(),
 });
 
+type Channel = z.infer<typeof RequestSchema>["channel"];
+type Intent = NonNullable<z.infer<typeof RequestSchema>["intent"]>;
+
 const secondLookLink = tanjiaConfig.secondLookUrl;
 
 function limitSentences(text: string, maxSentences = 3) {
@@ -35,13 +38,13 @@ function clean(text: string) {
   return stripped.replace(/^"+|"+$/g, "").trim();
 }
 
-const channelTones = {
+const channelTones: Record<Channel, string> = {
   comment: "public comment on a post (1-2 sentences, engaging and warm)",
   dm: "direct message (1-3 sentences, personal and quiet)",
   email: "email message (2-4 sentences, slightly more formal but still warm)",
 };
 
-const intentGuidance = {
+const intentGuidance: Record<Intent, string> = {
   reflect: "Mirror what they said. Show you heard them.",
   invite: "Invite them to share more if they'd like.",
   schedule: "Offer to find time to talk, no pressure.",
@@ -65,8 +68,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const channel = body.channel;
-  const intent = body.intent || "reflect";
+  const channel: Channel = body.channel;
+  const intent: Intent = body.intent ?? "reflect";
 
   const systemPrompt = `
 You help write calm, thoughtful networking responses. You are NOT an assistant or AI - you write as if you ARE the person sending the message.
