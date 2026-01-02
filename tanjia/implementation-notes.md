@@ -1,5 +1,115 @@
 # Tanjia Networking Hub – Implementation Notes
 
+## CHANGELOG: Tanjia Reply Helper Rewrite (Jan 2026)
+
+### What Changed
+**Fixed the Tanjia Reply Helper to consistently generate tailored, 2ndmynd-aware replies using a deterministic two-step agent flow.**
+
+### Core Changes
+1. **New Schema Layer** (`src/lib/tanjia/signal-schema.ts`)
+   - `SignalExtractSchema`: Structured extraction of values, pressures, stage, risks, openings from input
+   - `ReplyDraftSchema`: Validation schema for final reply with style checks and CTA tracking
+   - Enforces consistent signal analysis before reply generation
+
+2. **Prompt Architecture** (`src/lib/tanjia/reply-prompts.ts`)
+   - Exact, non-negotiable SYSTEM and DEVELOPER prompts
+   - Two-step flow: ANALYZE → RESPOND
+   - Hard rules against roleplay, generic paraphrasing, SaaS language
+   - Always mentions 2ndmynd + 2nd Look + link by default
+
+3. **Copy Rules & Tone Guard** (`src/lib/tanjia/copy-rules.ts`)
+   - Banned phrases list (40+ terms: optimize, leverage, scale, synergy, AI-powered, etc.)
+   - Preferred "Quiet Founder" language examples
+   - Validation helpers to enforce tone at runtime
+
+4. **Two-Step Agent Service** (`src/lib/tanjia/reply-helper.ts`)
+   - `generateReply()` function powers all reply routes
+   - Step 1: Extract signals into JSON (with retry/repair on parse failure)
+   - Step 2: Generate reply based on signals + validate against schema
+   - Step 3: Self-repair if validation fails (one retry attempt)
+   - Returns: `{ reply_text, analysis, checks, meta }` with failure tracking
+
+5. **API Route Refactor**
+   - `app/api/tanjia/comment-reply/route.ts`: Now uses `generateReply()`
+   - `app/api/tanjia/dm-reply/route.ts`: Now uses `generateReply()`
+   - Both routes return structured payload with analysis + validation checks
+   - Removed old inline prompts and helper functions
+
+6. **UI Enhancement** (`app/tanjia/helper/helper-client.tsx`)
+   - Added "Why this reply" collapsible section showing:
+     - Recommended angle (one-sentence strategy)
+     - Values (chips)
+     - Pressures (chips)
+     - Confidence score (progress bar)
+     - Validation checks (green checkmarks / red X)
+   - "Regenerate (new angle)" button to rerun full flow
+   - Analysis data returned from API displayed inline
+
+7. **Test Coverage** (`src/lib/tanjia/reply-helper.test.ts`)
+   - Unit tests for banned phrase detection
+   - Tone validation tests (exclamation points, bullet points, all-caps)
+   - Schema validation tests
+   - Scenario tests covering:
+     - Plumbing comment example (from screenshot) - validates NO roleplay
+     - Realtor post - validates pressure reflection
+     - Overwhelmed post - validates supportive tone
+     - Short vague comment - validates graceful handling
+
+### Validation Gate
+**Every reply must pass these checks before being returned:**
+- ✅ Directed to commenter (not about them, not as them)
+- ✅ References specific detail from their message
+- ✅ Mentions 2ndmynd
+- ✅ Mentions "2nd Look" by name
+- ✅ Includes link: https://www.2ndmynd.com/second-look
+- ✅ At most ONE call-to-action
+- ✅ Avoids SaaS/marketing language
+- ✅ Avoids roleplay as commenter (e.g., "I own Desert Pioneer Plumbing")
+
+### Length Constraints (by channel)
+- **Comment**: 40-110 words
+- **DM**: 40-140 words
+- **Followup**: 30-90 words
+
+### Acceptance Criteria Met
+- ✅ Helper ALWAYS produces reply addressing the commenter (not speaking as them)
+- ✅ Mentions 2ndmynd + 2nd Look + link by default
+- ✅ Never roleplays as the commenter
+- ✅ Never outputs generic paraphrase responses
+- ✅ UI displays "why this reply" signals
+- ✅ Tests cover core failure modes from screenshot
+
+### Files Created
+- `src/lib/tanjia/signal-schema.ts`
+- `src/lib/tanjia/reply-prompts.ts`
+- `src/lib/tanjia/copy-rules.ts`
+- `src/lib/tanjia/reply-helper.ts`
+- `src/lib/tanjia/reply-helper.test.ts`
+
+### Files Modified
+- `app/api/tanjia/comment-reply/route.ts`
+- `app/api/tanjia/dm-reply/route.ts`
+- `app/tanjia/helper/helper-client.tsx`
+
+### How to Test
+1. Go to `/tanjia/helper` (Reply Helper)
+2. Paste a comment like: "I own Desert Pioneer Plumbing specializing in water heaters, softeners, and leak repair. Honesty and keeping customers informed is what we do."
+3. Click Generate
+4. Verify:
+   - Reply addresses them (not as them)
+   - Mentions "2nd Look" and includes link
+   - References specific detail (e.g., "honesty", "water heater")
+   - Shows "Why this reply" section with values/pressures
+   - No banned phrases (optimize, leverage, scale, etc.)
+5. Try regenerating to confirm consistent behavior
+
+### Internal Logging
+- All replies save trace with `analysis`, `checks`, and `failures` in metadata
+- Failed validation attempts logged in `meta.failures` array
+- Can be inspected in Supabase `messages` table
+
+---
+
 ## What changed
 - Added MCP health check API (`app/api/tanjia/mcp-health/route.ts`) and explain-only status card on the system overview.
 - Introduced lead enrichment API (`app/api/tanjia/lead-enrich/route.ts`) using fetch/search tools + quiet agent prompt.

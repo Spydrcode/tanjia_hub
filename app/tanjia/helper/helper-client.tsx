@@ -11,7 +11,26 @@ import { useToast } from "@/src/components/ui/toast";
 import { SensitiveText } from "@/src/components/ui/sensitive-text";
 import { useViewModes } from "@/src/components/ui/view-modes";
 
-type AgentResponse = { text: string; traceId: string | null };
+type AgentResponse = {
+  text: string;
+  traceId: string | null;
+  analysis?: {
+    values: string[];
+    pressures: string[];
+    recommended_angle: string;
+    confidence: number;
+  };
+  checks?: {
+    is_directed_to_commenter: boolean;
+    references_specific_detail: boolean;
+    mentions_2ndmynd: boolean;
+    mentions_2nd_look: boolean;
+    includes_link: boolean;
+    one_cta_max: boolean;
+    avoids_saas_language: boolean;
+    avoids_roleplay_as_commenter: boolean;
+  };
+};
 type FollowupResponse = { next_action: string; log_note: string; followups: { when: string; text: string }[]; traceId: string | null };
 type ResultState =
   | { kind: "message"; data: AgentResponse }
@@ -40,6 +59,7 @@ export default function HelperClient({ cal15Url, cal30Url, initialLeadId, initia
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ResultState>(null);
   const [lastChannel, setLastChannel] = useState<ChannelType>("dm");
+  const [showWhySection, setShowWhySection] = useState(true);
   const showToast = useToast();
   const { presentationMode, explainMode } = useViewModes();
 
@@ -250,6 +270,110 @@ export default function HelperClient({ cal15Url, cal30Url, initialLeadId, initia
                 <p className="mt-2 text-xs text-neutral-500">Trace stored internally {result.data.traceId ? `(id: ${result.data.traceId})` : ""}.</p>
               ) : null}
             </div>
+
+            {/* Why this reply section */}
+            {result.data.analysis && (
+              <div className="space-y-3 rounded-lg border border-neutral-200 bg-white p-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-neutral-700">
+                    Why this reply
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowWhySection(!showWhySection)}
+                    className="text-xs text-neutral-500 hover:text-neutral-700"
+                  >
+                    {showWhySection ? "Hide" : "Show"}
+                  </button>
+                </div>
+
+                {showWhySection && (
+                  <div className="space-y-3">
+                    {/* Recommended angle */}
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-[0.08em] text-neutral-500">Angle</p>
+                      <p className="text-sm text-neutral-700">{result.data.analysis.recommended_angle}</p>
+                    </div>
+
+                    {/* Values */}
+                    {result.data.analysis.values.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-[0.08em] text-neutral-500 mb-2">Values</p>
+                        <div className="flex flex-wrap gap-2">
+                          {result.data.analysis.values.map((value) => (
+                            <Badge key={value} variant="muted">
+                              {value}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Pressures */}
+                    {result.data.analysis.pressures.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-[0.08em] text-neutral-500 mb-2">Pressures</p>
+                        <div className="flex flex-wrap gap-2">
+                          {result.data.analysis.pressures.map((pressure) => (
+                            <Badge key={pressure} variant="muted">
+                              {pressure}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Confidence */}
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-[0.08em] text-neutral-500">Confidence</p>
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-full rounded-full bg-neutral-200">
+                          <div
+                            className="h-2 rounded-full bg-neutral-600 transition-all"
+                            style={{ width: `${result.data.analysis.confidence * 100}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-neutral-600 tabular-nums">
+                          {Math.round(result.data.analysis.confidence * 100)}%
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Validation checks */}
+                    {result.data.checks && (
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-[0.08em] text-neutral-500 mb-2">Validation</p>
+                        <div className="space-y-1 text-xs">
+                          {Object.entries(result.data.checks).map(([key, value]) => (
+                            <div key={key} className="flex items-center gap-2">
+                              <span className={value ? "text-green-600" : "text-red-600"}>
+                                {value ? "✓" : "✗"}
+                              </span>
+                              <span className="text-neutral-600">
+                                {key.replace(/_/g, " ")}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Regenerate buttons */}
+                    <div className="flex gap-2 border-t border-neutral-200 pt-3">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleSubmit}
+                        disabled={isDisabled}
+                        className="text-xs"
+                      >
+                        Regenerate (new angle)
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
