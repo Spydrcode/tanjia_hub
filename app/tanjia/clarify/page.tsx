@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { requireAuthOrRedirect } from "@/lib/auth/redirect";
 import { PageShell } from "@/src/components/ui/page-shell";
 import { ZoneHeader } from "@/src/components/ui/zone-header";
-import { Button } from "@/src/components/ui/button";
-import { ClarifyClient } from "./clarify-client";
+import { ClarifyClientV2 } from "./clarify-client-v2";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "Clarify - 2ndmynd",
-  description: "Help them see what matters most right now.",
+  title: "Clarify - Tanjia",
+  description: "What should I focus on today, and what's slipping?",
 };
 
 export default async function ClarifyPage() {
@@ -18,43 +16,17 @@ export default async function ClarifyPage() {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   
-  // Fetch leads for selector
-  const { data: leads } = await supabase
-    .from("leads")
-    .select("id, name")
-    .eq("owner_id", user?.id || "")
-    .order("updated_at", { ascending: false })
-    .limit(50);
-
   return (
-    <PageShell maxWidth="md">
+    <PageShell maxWidth="xl">
       <ZoneHeader
         zone="clarify"
         title="Clarify"
-        anchor="Clarify"
-        question="What matters most right now?"
-        useWhen="You need to understand their real priority before offering anything."
-        actions={
-          <Link href="/tanjia/listen">
-            <Button variant="ghost" size="sm">← Back to Listen</Button>
-          </Link>
-        }
+        anchor="Focus"
+        question="What should I focus on today, and what's slipping?"
+        useWhen="Every morning to set direction, or anytime priorities shift."
       />
 
-      <ClarifyClient leads={leads || []} />
-
-      {/* Navigation */}
-      <div className="flex flex-wrap items-center gap-2 pt-2">
-        <Link href="/tanjia/listen">
-          <Button variant="ghost" size="sm">← Listen</Button>
-        </Link>
-        <Link href="/tanjia/map">
-          <Button variant="ghost" size="sm">Map →</Button>
-        </Link>
-        <Link href="/tanjia/decide">
-          <Button variant="ghost" size="sm">Decide →</Button>
-        </Link>
-      </div>
+      <ClarifyClientV2 />
     </PageShell>
   );
 }

@@ -21,12 +21,12 @@ const tools = [
   },
   {
     id: "analyze",
-    href: "/tanjia/tools/analyze",
+    href: "/tanjia/tools/company-overview",
     icon: Globe,
-    name: "Website Analysis",
-    anchor: "Analyze",
-    when: "Use this when you want to understand what someone's business is doing and where they might be stuck.",
-    cta: "Run analysis",
+    name: "Company Overview",
+    anchor: "Overview",
+    when: "Use this to get a calm snapshot of what they do and where pressure shows up.",
+    cta: "Open overview",
   },
   {
     id: "leads",

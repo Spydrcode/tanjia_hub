@@ -13,9 +13,12 @@ type Props = {
 };
 
 export function SensitiveText({ text, id, mask = "lead", className }: Props) {
-  const { presentationMode } = useViewModes();
+  const { shareMode, presentationMode } = useViewModes();
 
-  if (!presentationMode) {
+  // Use shareMode (or presentationMode for backward compatibility)
+  const isHidden = shareMode || presentationMode;
+
+  if (!isHidden) {
     return (
       <span data-sensitive="false" className={className}>
         {text}

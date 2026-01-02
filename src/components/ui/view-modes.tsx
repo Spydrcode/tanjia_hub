@@ -1,33 +1,138 @@
 'use client';
 
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 type ViewModesContext = {
   explainMode: boolean;
-  presentationMode: boolean;
+  shareMode: boolean;
   toggleExplain: () => void;
+  toggleShare: () => void;
+  setShare: (value: boolean) => void;
+  // Deprecated: keep for backward compatibility during transition
+  presentationMode: boolean;
   togglePresentation: () => void;
   setPresentation: (value: boolean) => void;
 };
 
 const defaultValue: ViewModesContext = {
   explainMode: false,
-  presentationMode: false,
+  shareMode: false,
   toggleExplain: () => {},
+  toggleShare: () => {},
+  setShare: () => {},
+  presentationMode: false,
   togglePresentation: () => {},
   setPresentation: () => {},
 };
 
 const ViewModesCtx = createContext<ViewModesContext>(defaultValue);
 
+const STORAGE_KEYS = {
+  explainMode: 'tanjia_explain_mode',
+  shareMode: 'tanjia_share_mode',
+};
+
 export function ViewModesProvider({ children }: { children: React.ReactNode }) {
-  return <ViewModesCtx.Provider value={defaultValue}>{children}</ViewModesCtx.Provider>;
+  const [explainMode, setExplainMode] = useState(false);
+  const [shareMode, setShareMode] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const storedExplain = localStorage.getItem(STORAGE_KEYS.explainMode);
+    const storedShare = localStorage.getItem(STORAGE_KEYS.shareMode);
+    
+    if (storedExplain !== null) {
+      setExplainMode(storedExplain === 'true');
+    }
+    if (storedShare !== null) {
+      setShareMode(storedShare === 'true');
+    }
+    
+    setMounted(true);
+  }, []);
+
+  // Persist to localStorage whenever values change
+  useEffect(() => {
+    if (!mounted) return;
+    localStorage.setItem(STORAGE_KEYS.explainMode, String(explainMode));
+  }, [explainMode, mounted]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    localStorage.setItem(STORAGE_KEYS.shareMode, String(shareMode));
+  }, [shareMode, mounted]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+Shift+E for Explain Mode
+      if (e.ctrlKey && e.shiftKey && e.key === 'E') {
+        e.preventDefault();
+        setExplainMode(prev => !prev);
+      }
+      
+      // Ctrl+Shift+S for Share Mode
+      if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+        e.preventDefault();
+        setShareMode(prev => {
+          const newValue = !prev;
+          // Share Mode automatically disables Explain Mode
+          if (newValue) {
+            setExplainMode(false);
+          }
+          return newValue;
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const toggleExplain = () => {
+    setExplainMode(prev => !prev);
+  };
+
+  const toggleShare = () => {
+    setShareMode(prev => {
+      const newValue = !prev;
+      // Share Mode automatically disables Explain Mode
+      if (newValue) {
+        setExplainMode(false);
+      }
+      return newValue;
+    });
+  };
+
+  const setShare = (value: boolean) => {
+    setShareMode(value);
+    // Share Mode automatically disables Explain Mode
+    if (value) {
+      setExplainMode(false);
+    }
+  };
+
+  const value: ViewModesContext = {
+    explainMode,
+    shareMode,
+    toggleExplain,
+    toggleShare,
+    setShare,
+    // Deprecated backward compatibility
+    presentationMode: shareMode,
+    togglePresentation: toggleShare,
+    setPresentation: setShare,
+  };
+
+  return <ViewModesCtx.Provider value={value}>{children}</ViewModesCtx.Provider>;
 }
 
 export function useViewModes() {
   return useContext(ViewModesCtx);
 }
 
+// Masking utilities for Share View (professional data hiding)
 export function maskEmail(email?: string | null) {
   if (!email) return "hidden email";
   const [user, domain] = email.split("@");
@@ -50,11 +155,11 @@ export function safeLeadLabel(id?: string | null) {
 }
 
 export function maskNote(note?: string | null) {
-  if (!note) return "Hidden";
-  return "Message hidden";
+  if (!note) return "Private details hidden";
+  return "Private details hidden";
 }
 
 export function maskGeneric(text?: string | null) {
-  if (!text) return "Hidden";
-  return "Hidden";
+  if (!text) return "Private details hidden";
+  return "Private details hidden";
 }

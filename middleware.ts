@@ -3,8 +3,17 @@ import { NextResponse } from "next/server";
 import { tanjiaServerConfig } from "@/lib/tanjia-config";
 
 export function middleware(request: NextRequest) {
+  const { pathname, searchParams } = request.nextUrl;
+  
+  // Redirect legacy presentation routes to share
+  if (pathname === "/tanjia/present" || pathname === "/tanjia/presentation") {
+    const shareUrl = new URL("/tanjia/share", request.url);
+    shareUrl.search = searchParams.toString(); // preserve query params
+    return NextResponse.redirect(shareUrl, 301); // permanent redirect
+  }
+
   // AUTH DISABLED FOR DEVELOPMENT: Allow all /tanjia routes without login
-  // if (request.nextUrl.pathname.startsWith("/tanjia") && !request.nextUrl.pathname.startsWith("/tanjia/login")) {
+  // if (pathname.startsWith("/tanjia") && !pathname.startsWith("/tanjia/login")) {
   //   const hasAuthCookie = request.cookies
   //     .getAll()
   //     .some((cookie) => cookie.name.startsWith("sb-") || cookie.name.includes("supabase"));
@@ -17,8 +26,6 @@ export function middleware(request: NextRequest) {
   if (!tanjiaServerConfig.helperPasscodeEnabled || !tanjiaServerConfig.helperPasscode) {
     return NextResponse.next();
   }
-
-  const { pathname, searchParams } = request.nextUrl;
   if (!pathname.startsWith("/tanjia/helper")) {
     return NextResponse.next();
   }

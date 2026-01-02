@@ -10,6 +10,7 @@ import { ProgressStepper, Step } from "@/src/components/ui/progress-stepper";
 import { BulletListCard } from "@/src/components/ui/output-card";
 import { SecondLookShare } from "@/src/components/ui/second-look-share";
 import { formatDistanceToNow } from "date-fns";
+import { type AnalysisV1 } from "@/src/lib/agents/analysis-v1";
 
 type Lead = {
   id: string;
@@ -63,7 +64,7 @@ export function MapClient({ leads, recentAnalyses }: Props) {
       // Show progress steps with actual timing
       const fetchStart = Date.now();
       
-      const response = await fetch("/api/tanjia/analyze", {
+      const response = await fetch("/api/tanjia/company-overview/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -83,13 +84,19 @@ export function MapClient({ leads, recentAnalyses }: Props) {
       }
 
       const data = await response.json();
+      const analysis: AnalysisV1 | undefined = data?.analysis;
+
+      if (!analysis) {
+        throw new Error("No analysis returned");
+      }
+
       setResult({
         leadId: selectedLeadId,
         url: urlToAnalyze.trim(),
-        growthChanges: data.growthChanges || [],
-        frictionPoints: data.frictionPoints || [],
-        calmNextSteps: data.calmNextSteps || [],
-        rawSummary: data.rawSummary,
+        growthChanges: analysis.inference.growthShape.signals.map((s) => s.label || analysis.snapshot.whatTheyDo),
+        frictionPoints: analysis.inference.frictionZones.map((f) => f.rationale),
+        calmNextSteps: analysis.nextActions.map((a) => a.title),
+        rawSummary: analysis.snapshot.whatTheyDo,
         createdAt: new Date().toISOString(),
       });
       setStatus('complete');

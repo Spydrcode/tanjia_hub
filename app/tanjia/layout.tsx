@@ -52,10 +52,10 @@ export default async function TanjiaLayout({ children }: { children: React.React
             <div className="flex items-center gap-2">
               {isAuth && (
                 <Link
-                  href="/tanjia/present"
+                  href="/tanjia/share"
                   className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-white transition hover:bg-emerald-700"
                 >
-                  Client-safe
+                  Share View
                 </Link>
               )}
               {isAuth && (

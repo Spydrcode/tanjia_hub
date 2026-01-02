@@ -85,6 +85,17 @@ export async function POST(request: NextRequest) {
         followup_question: body.followupQuestion,
       },
     });
+
+    // Create a followup task for 2 days out
+    const followupDate = new Date();
+    followupDate.setDate(followupDate.getDate() + 2);
+
+    await supabase.from("followups").insert({
+      lead_id: leadId,
+      action: "Follow up if no reply",
+      due_date: followupDate.toISOString().split('T')[0],
+      completed: false,
+    });
   }
 
   return NextResponse.json({
