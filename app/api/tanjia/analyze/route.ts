@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { runAgent } from "@/src/lib/agents/runtime";
-import { toolDefinitions, toolFetchPublicPage } from "@/src/lib/agents/tools";
+import { toolFetchPublicPage, toolWebSearch } from "@/src/lib/agents/tools";
+import { ensureHttpsUrl } from "@/src/lib/env";
 
 const RequestSchema = z.object({
   leadId: z.string().nullable().optional(),
-  url: z.string().url(),
+  url: z
+    .string()
+    .min(1, "URL is required")
+    .transform((val) => val.trim()),
 });
 
 const OutputSchema = z.object({
@@ -34,31 +38,60 @@ export async function POST(request: NextRequest) {
   }
 
   // Normalize URL
-  let url = body.url.trim();
-  if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    url = `https://${url}`;
+  const url = ensureHttpsUrl(body.url);
+  if (!url) {
+    return NextResponse.json({ error: "A valid URL is required." }, { status: 400 });
+  }
+  const base = new URL(url);
+
+  // Collect multiple pages + search results for richer context
+  const snippets: string[] = [];
+  const sources: string[] = [];
+
+  async function fetchSnippet(targetUrl: string) {
+    try {
+      const res = await toolFetchPublicPage({ url: targetUrl });
+      if (res.output?.snippet) {
+        snippets.push(`# Source: ${res.output.url}\n${res.output.snippet}`);
+        sources.push(res.output.url);
+      }
+    } catch (err) {
+      console.warn("[analyze] fetch failed", targetUrl, err);
+    }
   }
 
-  // Collect page content
-  let pageContent = "";
+  const primaryUrls = [
+    url,
+    `${base.origin}/about`,
+    `${base.origin}/team`,
+    `${base.origin}/services`,
+    `${base.origin}/pricing`,
+    `${base.origin}/blog`,
+    `${base.origin}/company`,
+  ];
+
+  for (const u of primaryUrls) {
+    await fetchSnippet(u);
+  }
+
+  // Web search to pick up additional public pages
   try {
-    const fetchResult = await toolFetchPublicPage({ url });
-    pageContent = fetchResult.output?.snippet || "";
+    const domain = base.hostname.replace(/^www\./, "");
+    const search = await toolWebSearch({ query: `${domain} site:${domain}` });
+    const searchResults = search.output?.results?.slice(0, 3) || [];
+    for (const result of searchResults) {
+      if (result?.snippet) {
+        snippets.push(`# Search result: ${result.url}\n${result.snippet}`);
+      }
+      if (result?.url) {
+        await fetchSnippet(result.url);
+      }
+    }
   } catch (err) {
-    console.warn("[analyze] fetch failed", err);
+    console.warn("[analyze] search fetch failed", err);
   }
 
-  // Try to fetch about page too
-  let aboutContent = "";
-  try {
-    const aboutUrl = url.replace(/\/$/, "") + "/about";
-    const aboutResult = await toolFetchPublicPage({ url: aboutUrl });
-    aboutContent = aboutResult.output?.snippet || "";
-  } catch {
-    // Optional page
-  }
-
-  const combinedContent = [pageContent, aboutContent].filter(Boolean).join("\n\n---\n\n").slice(0, 6000);
+  const combinedContent = snippets.join("\n\n---\n\n").slice(0, 9000);
 
   if (!combinedContent) {
     return NextResponse.json({
@@ -78,6 +111,9 @@ RULES:
 - Keep each bullet to one sentence.
 - Be genuinely helpful, not salesy or pushy.
 - If signals are thin, say so honestly.
+OUTPUT CONTRACT:
+- Respond with valid JSON only (no markdown).
+- Each array must include at least one bullet; if there is no signal, include a single bullet that explains what is missing.
 
 Analyze the page content and return JSON:
 {
@@ -92,6 +128,9 @@ Keep observations grounded in what's actually visible on the page.
 
   const userPrompt = `
 Website URL: ${url}
+
+Fetched sources:
+${sources.map((s) => `- ${s}`).join("\n") || "- none"}
 
 Page content:
 ${combinedContent}
@@ -131,6 +170,20 @@ Analyze this and provide insights.
         frictionPoints: [],
         calmNextSteps: ["Review the raw content manually"],
         rawSummary: content?.slice(0, 500) || "",
+      };
+    }
+
+    // Ensure we never return empty arrays to the UI
+    if (
+      (!parsed.growthChanges || parsed.growthChanges.length === 0) &&
+      (!parsed.frictionPoints || parsed.frictionPoints.length === 0) &&
+      (!parsed.calmNextSteps || parsed.calmNextSteps.length === 0)
+    ) {
+      parsed = {
+        growthChanges: ["No clear growth signals were visible from the fetched pages."],
+        frictionPoints: ["Signals were too thin to identify friction points."],
+        calmNextSteps: ["Try scanning a deeper page (e.g., /about or /services) or check if the site blocks scraping."],
+        rawSummary: parsed.rawSummary || "Content was too thin to summarize confidently.",
       };
     }
 

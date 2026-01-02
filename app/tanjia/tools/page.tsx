@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { MessageSquare, Globe, Users, Clock, HelpCircle, Presentation } from "lucide-react";
+import { MessageSquare, Globe, Users, Clock, HelpCircle, Presentation, CalendarClock } from "lucide-react";
 import { PageShell } from "@/src/components/ui/page-shell";
 import { IntentHeader } from "@/src/components/ui/intent-header";
 import { Card, CardContent } from "@/src/components/ui/card";
@@ -45,6 +45,15 @@ const tools = [
     anchor: "Follow-ups",
     when: "Use this to check who needs a gentle nudge.",
     cta: "View follow-ups",
+  },
+  {
+    id: "scheduler",
+    href: "/tanjia/tools/scheduler",
+    icon: CalendarClock,
+    name: "Cal Scheduling",
+    anchor: "Scheduling",
+    when: "Use this to book a calm slot on Cal.com without leaving the workspace.",
+    cta: "Open scheduler",
   },
   {
     id: "helper",

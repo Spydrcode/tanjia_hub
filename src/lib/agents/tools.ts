@@ -1,8 +1,9 @@
 ﻿import { z } from "zod";
 import { ensureHttpsUrl, featureFlags, serverEnv } from "@/src/lib/env";
+import { scrapeWebpage, createSnippet } from "@/src/lib/scraping/scraper";
 
-const MAX_SNIPPET = 1200;
-const TIMEOUT_MS = 5000;
+const MAX_SNIPPET = 2500;
+const TIMEOUT_MS = 10000;
 const ALLOWED_PROTOCOL = /^https:\/\//i;
 
 type FetchOutput = { url: string; snippet: string };
@@ -12,7 +13,7 @@ export type ToolResult =
   | { name: "fetch_public_page"; output: FetchOutput | null }
   | { name: "web_search"; output: SearchOutput | null };
 
-const fetchSchema = z.object({ url: z.string().url() });
+const fetchSchema = z.object({ url: z.string().min(1) });
 const searchSchema = z.object({ query: z.string().min(2).max(200) });
 
 export const toolDefinitions = [
@@ -73,17 +74,21 @@ async function fetchViaMcp(path: string, body: unknown): Promise<any | null> {
 async function basicFetch(url: string): Promise<FetchOutput | null> {
   const safeUrl = ensureHttpsUrl(url);
   if (!ALLOWED_PROTOCOL.test(safeUrl)) return null;
+  
   try {
-    const res = await withTimeout(fetch(safeUrl, { method: "GET", next: { revalidate: 120 } }));
-    if (!res) return null;
-    const text = await (res as Response).text();
-    return text
-      ? {
-          url: safeUrl,
-          snippet: text.replace(/\s+/g, " ").slice(0, MAX_SNIPPET),
-        }
-      : null;
-  } catch {
+    // Use the scraper for better content extraction
+    const scraped = await scrapeWebpage(safeUrl);
+    if (!scraped) return null;
+    
+    // Create a rich snippet with structured content
+    const snippet = createSnippet(scraped, MAX_SNIPPET);
+    
+    return {
+      url: safeUrl,
+      snippet,
+    };
+  } catch (error) {
+    console.error("[tools] basicFetch error:", error);
     return null;
   }
 }
@@ -91,11 +96,18 @@ async function basicFetch(url: string): Promise<FetchOutput | null> {
 export async function toolFetchPublicPage(input: unknown): Promise<{ name: "fetch_public_page"; output: FetchOutput | null }> {
   const parsed = fetchSchema.safeParse(input);
   if (!parsed.success) return { name: "fetch_public_page", output: null };
-  const mcp = await fetchViaMcp("fetch_public_page", parsed.data);
+
+  const targetUrl = ensureHttpsUrl(parsed.data.url);
+  if (!ALLOWED_PROTOCOL.test(targetUrl)) return { name: "fetch_public_page", output: null };
+
+  const mcp = await fetchViaMcp("fetch_public_page", { url: targetUrl });
   if (mcp?.url && mcp?.snippet) {
-    return { name: "fetch_public_page", output: { url: ensureHttpsUrl(mcp.url), snippet: String(mcp.snippet).slice(0, MAX_SNIPPET) } };
+    return {
+      name: "fetch_public_page",
+      output: { url: ensureHttpsUrl(mcp.url), snippet: String(mcp.snippet).slice(0, MAX_SNIPPET) },
+    };
   }
-  return { name: "fetch_public_page", output: await basicFetch(parsed.data.url) };
+  return { name: "fetch_public_page", output: await basicFetch(targetUrl) };
 }
 
 export async function toolWebSearch(input: unknown): Promise<{ name: "web_search"; output: SearchOutput | null }> {

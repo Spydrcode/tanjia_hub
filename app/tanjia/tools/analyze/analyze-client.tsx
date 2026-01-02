@@ -47,6 +47,7 @@ export function AnalyzeClient({ leads, history }: Props) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [apiPayload, setApiPayload] = useState<Record<string, any> | null>(null);
   const [processingStep, setProcessingStep] = useState(0);
 
   const selectedLead = leads.find(l => l.id === selectedLeadId);
@@ -64,6 +65,7 @@ export function AnalyzeClient({ leads, history }: Props) {
     setIsProcessing(true);
     setError(null);
     setResult(null);
+    setApiPayload(null);
     setProcessingStep(0);
 
     try {
@@ -83,11 +85,14 @@ export function AnalyzeClient({ leads, history }: Props) {
 
       clearInterval(stepInterval);
 
-      if (!response.ok) {
-        throw new Error("Failed to run analysis");
+      const data = await response.json().catch(() => null);
+      setApiPayload(data);
+
+      if (!response.ok || !data) {
+        const message = (data as any)?.error || "Failed to run analysis";
+        throw new Error(message);
       }
 
-      const data = await response.json();
       setProcessingStep(3);
       setResult({
         growthChanges: data.growthChanges || [],
@@ -238,6 +243,27 @@ export function AnalyzeClient({ leads, history }: Props) {
                 <ExternalLink className="h-3.5 w-3.5" />
                 Open client-safe view
               </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Raw API payload for troubleshooting */}
+      {apiPayload && !isProcessing && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Card className="border-neutral-200 bg-white/80 backdrop-blur">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold text-neutral-900">
+                Latest API response
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre className="whitespace-pre-wrap break-words text-xs text-neutral-700 bg-neutral-50 border border-neutral-100 rounded-md p-3">
+                {JSON.stringify(apiPayload, null, 2)}
+              </pre>
             </CardContent>
           </Card>
         </motion.div>

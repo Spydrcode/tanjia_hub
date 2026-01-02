@@ -56,6 +56,13 @@ export default async function TanjiaHubPage() {
           href="/tanjia/support"
           delay={0.2}
         />
+
+        <HubCard
+          title="I need a tool"
+          subtitle="Open scheduling, helper, leads, and follow-ups in one place."
+          href="/tanjia/tools"
+          delay={0.25}
+        />
       </div>
 
       <div className="mt-6 flex flex-col items-center gap-3">

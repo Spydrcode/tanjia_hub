@@ -78,6 +78,7 @@ export default async function TanjiaLayout({ children }: { children: React.React
               <NavLink href="/tanjia/map">Map</NavLink>
               <NavLink href="/tanjia/decide">Decide</NavLink>
               <NavLink href="/tanjia/support">Support</NavLink>
+              <NavLink href="/tanjia/tools">Tools</NavLink>
               <span className="text-neutral-300 px-0.5">·</span>
               <NavLink href="/tanjia/leads">Leads</NavLink>
               <NavLink href="/tanjia/system">System</NavLink>
