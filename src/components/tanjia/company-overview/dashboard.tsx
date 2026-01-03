@@ -199,10 +199,10 @@ export function CompanyOverviewDashboard({ leads, history, initialAnalysis, site
               Copy Next Steps
             </Button>
             <Button variant="secondary" size="sm" onClick={copyClientSafe}>
-              Copy client-safe view
+              Copy Client View
             </Button>
             <Link href="/tanjia/presentation" target="_blank">
-              <Button variant="ghost" size="sm">Open client-safe view</Button>
+              <Button variant="ghost" size="sm">Open Client View</Button>
             </Link>
           </div>
         </div>
@@ -476,7 +476,7 @@ export function CompanyOverviewDashboard({ leads, history, initialAnalysis, site
                     Evidence
                   </summary>
                   {presentationMode ? (
-                    <p className="text-xs text-neutral-500 mt-2">Evidence is hidden in client-safe view.</p>
+                    <p className="text-xs text-neutral-500 mt-2">Evidence is hidden in Client View.</p>
                   ) : (
                     <div className="mt-2 space-y-2">
                       {analysis.evidence.length > 0 ? (

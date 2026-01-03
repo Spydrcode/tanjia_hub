@@ -15,7 +15,7 @@ This checklist ensures core 2ndmynd/Tanjia features remain intact and accessible
 - [ ] "Open client view" link in header points to `/tanjia/present` and works
 
 ### Presentation Page
-- [ ] `/tanjia/present` is client-safe (no internal tool references)
+- [ ] `/tanjia/present` is Client View (no internal tool references)
 - [ ] `/tanjia/present` includes the loop line
 - [ ] `/tanjia/present` includes ShareBlock with "Copy note" + "Copy Second Look"
 - [ ] `/tanjia/present` has minimal operator navigation (header only)
@@ -25,7 +25,7 @@ This checklist ensures core 2ndmynd/Tanjia features remain intact and accessible
 - [ ] Page feels like a checklist, not a dashboard
 - [ ] No jargon, internal tool names, or MCP references
 - [ ] Contains fast actions: capture lead, add note, plan follow-up, draft reply
-- [ ] Is clearly operator-facing, not client-safe
+- [ ] Is clearly operator-facing, not Client View
 
 ### Language & Tone
 - [ ] No SaaS language (dashboard, command center, modes)

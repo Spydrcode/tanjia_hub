@@ -15,7 +15,7 @@ export default function EMythPage() {
         title="E-Myth tools"
         anchor="System"
         eyebrow="Tanjia"
-        description="Primary Aim, Role Map, and follow-through. Client-safe view hides internal outputs."
+        description="Primary Aim, Role Map, and follow-through. Client View hides internal outputs."
         size="lg"
       />
       <EMythClient />

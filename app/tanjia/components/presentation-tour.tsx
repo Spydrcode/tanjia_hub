@@ -11,7 +11,7 @@ type Step = {
 };
 
 const steps: Step[] = [
-  { title: "Client-safe view", body: "Masking keeps names, traces, and internal notes hidden for clients.", selector: "[data-tour='client-safe']" },
+  { title: "Client View", body: "Masking keeps names, traces, and internal notes hidden for clients.", selector: "[data-tour='client-view']" },
   { title: "What is 2ndmynd", body: "A quiet outreach desk — this card explains the posture and tone.", selector: "[data-tour='what-2ndmynd']" },
   { title: "What is a 2nd Look", body: "Grounded description to keep the offer human and concise.", selector: "[data-tour='what-second-look']" },
   { title: "How it works", body: "Three-step rundown for meetings or demos.", selector: "[data-tour='how-it-works']" },

@@ -8,7 +8,7 @@
   - `app/tanjia/followups/page.tsx` — follow-up board (client + server pieces).
   - `app/tanjia/helper/page.tsx` — reply helper; intent “schedule” supported.
   - `app/tanjia/scheduler/page.tsx` — in-app Cal embed with 15/30 cards, presentation-safe prefill suppression.
-  - `app/tanjia/system-overview/page.tsx` — client-safe overview (cards + aggregated metrics, no PII).
+  - `app/tanjia/system-overview/page.tsx` — Client View overview (cards + aggregated metrics, no PII).
 - **API Routes**
   - `app/api/tanjia-auth/route.ts` — helper passcode auth.
   - `app/api/tanjia-agent/route.ts` — agent (reflect/invite/schedule/encourage) with schedule agent path.
@@ -23,7 +23,7 @@
   - RLS: leads/followups/messages owner-scoped; lead_bookings policy currently owner-based (owner_id).
 - **Major UI Modes**
   - Explain Mode (internal-only, default OFF, /tanjia scope, ⓘ popovers on scheduler/lead detail/followups/metrics).
-  - Presentation Mode (UI masking of names/emails/notes/messages/followups; suppresses scheduler prefill; banner + client-safe link copy; data untouched).
+  - Presentation Mode (UI masking of names/emails/notes/messages/followups; suppresses scheduler prefill; banner + Client View link copy; data untouched).
   - Walkthrough button (header) flips Presentation Mode and opens system overview.
 - **Metrics**
   - `/api/tanjia/metrics`: schedule_opened, duration_selected, bookings_created/canceled, followups_created/completed, unmatched_bookings; each returns `{ last7d, prev7d, delta }`.
@@ -32,7 +32,7 @@
 ## What’s Live Now
 - In-app Cal scheduling with 15/30-minute cards and embedded booking; logging via scheduler log endpoint; webhooks upsert bookings and (when mapped) create followups and messages.
 - Lead + follow-up workspace with masking-aware UI, helper agent, and scheduling links.
-- Client-safe system overview with aggregated Operating Rhythm metrics and Explain-Mode walkthrough script.
+- Client View system overview with aggregated Operating Rhythm metrics and Explain-Mode walkthrough script.
 - Guardrails: /tanjia/* is noindex; Explain content rendered only when toggled; Presentation masking is UI-only and suppresses prefill.
 - RLS tightened to owner_id on lead_bookings (policy in `004_bookings_attribution.sql`), pending confirmation in 005.
 

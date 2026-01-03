@@ -317,7 +317,7 @@ export function MapClient({ leads, recentAnalyses }: Props) {
               <Link href={presentUrl} className="flex-1">
                 <Button variant="secondary" size="sm" className="w-full">
                   <ExternalLink className="h-4 w-4 mr-1" />
-                  Client-safe view
+                  Client View
                 </Button>
               </Link>
             </div>

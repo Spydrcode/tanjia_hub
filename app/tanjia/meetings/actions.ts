@@ -227,3 +227,26 @@ export async function endMeetingAndGenerateResults(meetingId: string) {
   revalidatePath(`/tanjia/meetings/${meetingId}/results`);
   revalidatePath(`/tanjia/meetings/${meetingId}`);
 }
+
+export type RecordingPayload = {
+  meetingId: string;
+  recordingUrl?: string;
+  transcriptText?: string;
+  transcriptSource?: string;
+};
+
+export async function updateMeetingRecording(payload: RecordingPayload) {
+  const { supabase, user } = await requireAuthOrRedirect();
+  const { error } = await supabase
+    .from("meetings")
+    .update({
+      recording_url: payload.recordingUrl?.trim() || null,
+      transcript_text: payload.transcriptText?.trim() || null,
+      transcript_source: payload.transcriptSource?.trim() || null,
+    })
+    .eq("id", payload.meetingId)
+    .eq("owner_id", user.id);
+
+  if (error) throw new Error(error.message);
+  revalidatePath(`/tanjia/meetings/${payload.meetingId}`);
+}

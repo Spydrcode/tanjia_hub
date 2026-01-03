@@ -20,7 +20,7 @@ export default function PresentationClient({ secondLookUrl }: Props) {
     <div className="flex flex-col gap-6">
       <div
         className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-gradient-to-br from-neutral-900 via-neutral-850 to-neutral-900 p-4 text-white shadow-sm"
-        data-tour="client-safe"
+        data-tour="client-view"
       >
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.08),transparent_45%),radial-gradient(circle_at_bottom_right,_rgba(255,255,255,0.08),transparent_35%)]" />
         <div className="relative flex items-center justify-between gap-2">
@@ -112,7 +112,7 @@ export default function PresentationClient({ secondLookUrl }: Props) {
                   </p>
                 </div>
               </div>
-              <p className="text-xs text-neutral-500">Why this: Client-safe drafts that mirror their note and keep offers optional.</p>
+              <p className="text-xs text-neutral-500">Why this: Client View drafts that mirror their note and keep offers optional.</p>
             </CardContent>
           </Card>
         </motion.div>
@@ -134,7 +134,7 @@ export default function PresentationClient({ secondLookUrl }: Props) {
         <motion.div data-tour="timeline" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="md:col-span-2">
           <Card className="border-neutral-200/80 bg-white/95 shadow-sm">
             <CardContent className="space-y-3 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-neutral-500">Timeline replay (client-safe)</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-neutral-500">Timeline replay (Client View)</p>
               <div className="grid gap-3 sm:grid-cols-5">
                 {[
                   { title: "Listen", desc: "Captured what you shared.", status: "done" },

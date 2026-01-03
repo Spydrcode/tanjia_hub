@@ -70,7 +70,7 @@ const tools = [
     icon: Presentation,
     name: "Present",
     anchor: "Present",
-    when: "Use this to show a client-safe view without operator details.",
+    when: "Use this to show a Client View without operator details.",
     cta: "Open presentation",
   },
 ];

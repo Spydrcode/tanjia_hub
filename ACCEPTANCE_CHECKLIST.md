@@ -65,7 +65,7 @@ This checklist verifies that the zone-based reframe is complete and working as i
 
 ## Present Page (`/tanjia/present`)
 - [ ] Page loads without error
-- [ ] Client-safe badge visible
+- [ ] Client View badge visible
 - [ ] Back to Hub link works
 - [ ] Growth messaging displays
 - [ ] Second Look share button works
@@ -91,7 +91,7 @@ This checklist verifies that the zone-based reframe is complete and working as i
 - `/tanjia/decide` — DECIDE zone
 - `/tanjia/support` — SUPPORT zone
 - `/tanjia/system` — System Overview
-- `/tanjia/present` — Client-safe presentation
+- `/tanjia/present` — Client View presentation
 - `/tanjia/leads` — Lead management (operator)
 - `/tanjia/leads/[id]` — Lead detail
 - `/tanjia/followups` — Follow-up queue (operator)

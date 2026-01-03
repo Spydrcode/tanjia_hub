@@ -88,7 +88,7 @@ const presets: Preset[] = [
   {
     id: "client",
     name: "Client 1:1",
-    description: "Client-safe demo with masking and examples.",
+    description: "Client View demo with masking and examples.",
     focusMode: true,
     presentationMode: true,
     density: "comfortable",
@@ -184,7 +184,7 @@ export default function DashboardClient({ description, nextMeeting, followupsDue
                 {currentPreset.description} — One intent at a time. Use the Command Bar below.
               </p>
             ) : (
-              <p className="text-sm text-neutral-700">Client-safe view is active. Traces remain hidden.</p>
+              <p className="text-sm text-neutral-700">Client View is active. Traces remain hidden.</p>
             )}
             <div className="flex flex-wrap gap-2">
               <GradientPill label={description} tone="neutral" />
@@ -196,7 +196,7 @@ export default function DashboardClient({ description, nextMeeting, followupsDue
               {focusMode ? "Focus mode on" : "Focus mode"}
             </Button>
             <Button variant={presentationMode ? "secondary" : "primary"} size="sm" onClick={handlePresent}>
-              Client-safe view
+              Client View
             </Button>
             <Button variant="ghost" size="sm" onClick={copyClientLink}>
               Copy client link
@@ -271,7 +271,7 @@ export default function DashboardClient({ description, nextMeeting, followupsDue
       ) : (
         <Card className="border-neutral-200/80 bg-white/90 shadow-sm">
           <CardContent className="p-4 sm:p-5 space-y-2">
-            <p className="text-sm font-semibold text-neutral-900">Client-safe CTA</p>
+            <p className="text-sm font-semibold text-neutral-900">Client View CTA</p>
             <p className="text-sm text-neutral-700">Open presentation and keep masking on. One intent only.</p>
             <Button asChild size="sm">
               <Link href="/tanjia/presentation">Open presentation</Link>
@@ -319,11 +319,11 @@ export default function DashboardClient({ description, nextMeeting, followupsDue
       <FocusSheet
         open={activeAction === "present"}
         title="Present"
-        description="Client-safe story view."
+        description="Client View story view."
         onClose={() => setActiveAction(null)}
       >
         <div className="space-y-3">
-          <p className="text-sm text-neutral-700">Open the presentation page to stay client-safe.</p>
+          <p className="text-sm text-neutral-700">Open the presentation page to stay in Client View.</p>
           <Button asChild size="sm" onClick={() => setActiveAction(null)}>
             <Link href="/tanjia/presentation">Open presentation</Link>
           </Button>

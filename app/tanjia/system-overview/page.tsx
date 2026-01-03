@@ -10,7 +10,7 @@ import { brandGradients } from "@/src/components/ui/brand";
 
 export const metadata: Metadata = {
   title: "System overview",
-  description: "Client-safe view of how the hub runs day to day.",
+  description: "Client View of how the hub runs day to day.",
   robots: { index: false, follow: false },
 };
 
@@ -64,7 +64,7 @@ export default async function SystemOverviewPage() {
         title="System"
         anchor="overview"
         eyebrow="Tanjia"
-        description="A client-safe view of how the hub runs day to day."
+        description="A Client View of how the hub runs day to day."
         actionHref="/tanjia"
         actionLabel="Back to hub"
         actionVariant="ghost"

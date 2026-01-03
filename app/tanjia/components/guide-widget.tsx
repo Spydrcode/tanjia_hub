@@ -42,7 +42,7 @@ function getContent(path: string): CoachContent {
   if (path.startsWith("/tanjia/present")) {
     return {
       title: "Client view",
-      body: "This is client-safe. Keep it simple.",
+      body: "This is Client View. Keep it simple.",
     };
   }
   return {

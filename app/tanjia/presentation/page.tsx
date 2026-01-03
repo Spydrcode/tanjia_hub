@@ -5,7 +5,7 @@ import PresentationClient from "./presentation-client";
 
 export const metadata: Metadata = {
   title: "Presentation - 2ndmynd",
-  description: "Client-safe view of what 2ndmynd and a 2nd Look offer.",
+  description: "Client View of what 2ndmynd and a 2nd Look offer.",
   robots: { index: false, follow: false },
 };
 
@@ -14,7 +14,7 @@ export default function PresentationPage() {
     <div className="flex flex-col gap-6 pb-12">
       <PageHeader
         title="Presentation"
-        anchor="Client-safe"
+        anchor="Client View"
         eyebrow="Tanjia"
         description="Share what 2ndmynd and a 2nd Look are without exposing lead data."
         size="lg"

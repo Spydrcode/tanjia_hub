@@ -20,6 +20,7 @@ import { requireAuthOrRedirect } from "@/lib/auth/redirect";
 import { PageShell } from "@/src/components/ui/page-shell";
 import { IntentHeader } from "@/src/components/ui/intent-header";
 import { PageHeader } from "@/src/components/ui/page-header";
+import { PinButton } from "../../components/pin-button";
 
 export const metadata: Metadata = {
   title: "Lead Detail",
@@ -188,14 +189,25 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <PageShell maxWidth="lg">
-      <IntentHeader
-        badge="Operator only"
-        badgeVariant="operator"
-        title={(activeLead as any).name || "Lead"}
-        subtitle={lastRunLabel}
-        backHref="/tanjia/leads"
-        backLabel="Back to Leads"
-      />
+      <div className="flex items-start justify-between gap-4">
+        <IntentHeader
+          badge="Operator only"
+          badgeVariant="operator"
+          title={(activeLead as any).name || "Lead"}
+          subtitle={lastRunLabel}
+          backHref="/tanjia/leads"
+          backLabel="Back to Leads"
+        />
+        <PinButton
+          item={{
+            id: leadId,
+            type: "lead",
+            title: (activeLead as any).name || "Lead",
+            href: `/tanjia/leads/${leadId}`,
+            subtitle: `Lead${(activeLead as any).company ? ` • ${(activeLead as any).company}` : ""}`,
+          }}
+        />
+      </div>
 
       <LeadDetailClient
         leadId={leadId}

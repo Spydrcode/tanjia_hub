@@ -18,7 +18,7 @@ Transformed Tanjia from a collection of isolated tools into a true **Director of
 
 ### Phase 1: View Modes Architecture ✅
 
-**Problem**: Stub provider with no state management, confusing "client-safe" terminology
+**Problem**: Stub provider with no state management, confusing "Client View" terminology
 
 **Solution**: Real state management with professional Share View pattern
 
@@ -32,7 +32,7 @@ Transformed Tanjia from a collection of isolated tools into a true **Director of
 
 - `src/components/ui/sensitive-text.tsx` — Updated to use shareMode
 
-- `app/tanjia/layout.tsx` — Changed "Client-safe" button to "Share View", href to `/tanjia/share`
+- `app/tanjia/layout.tsx` — Changed "Client View" button to "Share View", href to `/tanjia/share`
 
 **Result**: Professional view-switching with persistent state, clear terminology
 
@@ -142,7 +142,7 @@ Transformed Tanjia from a collection of isolated tools into a true **Director of
 
 ### Phase 6: Professional Share View ✅
 
-**Problem**: Confusing "client-safe" / "presentation" terminology, duplicate routes
+**Problem**: Confusing "Client View" / "presentation" terminology, duplicate routes
 
 **Solution**: Single professional Share View route
 
@@ -431,6 +431,6 @@ create index share_links_owner_idx on public.share_links(owner_id);
 ✅ **Director opens `/tanjia`**: Sees what's due, scheduled, stuck, and one recommended move
 ✅ **Opens any zone**: Sees operational status + next action + supporting context  
 ✅ **Scheduler and bookings**: Show up everywhere as status
-✅ **Share View**: Professional and understandable, no "client-safe" term remains
+✅ **Share View**: Professional and understandable, no "Client View" confusion remains
 
 **NEXT**: Complete remaining zone pages, wire tools to create operational state, polish UI.

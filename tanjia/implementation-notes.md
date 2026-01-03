@@ -171,5 +171,5 @@
 
 ## Dashboard polish and presentation access
 - /tanjia now uses a GradientHeading hero + GradientPills, 12-col grid, Today/quick actions/operating rhythm strips, and subtle Framer Motion transitions to match the 2ndmynd visual style.
-- Presentation Mode: use the dashboard "Presentation Mode" primary CTA (or the header "Client view" control). It turns off Explain, enables presentation mode, and routes to `/tanjia/system-overview`; the secondary dashboard button copies the client-safe link.
+- Presentation Mode: use the dashboard "Presentation Mode" primary CTA (or the header "Client view" control). It turns off Explain, enables presentation mode, and routes to `/tanjia/system-overview`; the secondary dashboard button copies the Client View link.
 - Anchor gradients: page headers now use `PageHeader` with `anchor` for /tanjia, Leads, Follow-ups, Meetings, Scheduler, Helper, and System overview. Confirm by checking the gradient word in each heading.

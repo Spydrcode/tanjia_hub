@@ -6,6 +6,8 @@ import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
 import { requireAuthOrRedirect } from "@/lib/auth/redirect";
 import { startMeeting, endMeetingAndGenerateResults } from "../actions";
+import { RecordingSection } from "../components/recording-section";
+import { PinButton } from "../../components/pin-button";
 
 export default async function MeetingDetailPage({ params }: { params: { id: string } }) {
   const resolvedParams = await params;
@@ -13,7 +15,7 @@ export default async function MeetingDetailPage({ params }: { params: { id: stri
   const { supabase, user } = await requireAuthOrRedirect();
   const { data } = await supabase
     .from("meetings")
-    .select("id, title, group_name, start_at, end_at, status, location_name, address, notes, completed_at")
+    .select("id, title, group_name, start_at, end_at, status, location_name, address, notes, completed_at, recording_url, transcript_text, transcript_source")
     .eq("id", meetingId)
     .eq("owner_id", user.id)
     .single();
@@ -40,7 +42,18 @@ export default async function MeetingDetailPage({ params }: { params: { id: stri
           <h1 className="text-3xl font-semibold text-neutral-900">{data.title}</h1>
           {data.group_name ? <p className="text-sm text-neutral-600">{data.group_name}</p> : null}
         </div>
-        <Badge variant="muted">{data.status}</Badge>
+        <div className="flex items-center gap-2">
+          <PinButton
+            item={{
+              id: meetingId,
+              type: "meeting",
+              title: data.title,
+              href: `/tanjia/meetings/${meetingId}`,
+              subtitle: `Meeting • ${format(new Date(data.start_at), "MMM d, h:mma")}`,
+            }}
+          />
+          <Badge variant="muted">{data.status}</Badge>
+        </div>
       </div>
 
       <Card>
@@ -74,6 +87,14 @@ export default async function MeetingDetailPage({ params }: { params: { id: stri
           </div>
         </CardContent>
       </Card>
+
+      {/* Recording & Transcript Section */}
+      <RecordingSection
+        meetingId={meetingId}
+        recordingUrl={data.recording_url}
+        transcriptText={data.transcript_text}
+        transcriptSource={data.transcript_source}
+      />
     </div>
   );
 }

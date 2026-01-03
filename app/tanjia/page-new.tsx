@@ -43,7 +43,7 @@ export default async function TanjiaEntryPage() {
             variant="secondary"
             className="w-full justify-start text-left text-lg leading-tight py-7 sm:text-xl sm:leading-tight sm:py-8 border-neutral-300 transition-transform hover:-translate-y-0.5"
           >
-            <Link href="/tanjia/introduce">Explain 2ndmynd (client-safe)</Link>
+            <Link href="/tanjia/introduce">Explain 2ndmynd (Client View)</Link>
           </Button>
           <p className="text-sm text-neutral-600">Use this when someone asks what we do. Calm, clear, shareable.</p>
         </div>
