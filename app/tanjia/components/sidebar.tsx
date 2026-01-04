@@ -134,7 +134,7 @@ export function Sidebar() {
     {
       title: "Workspace",
       items: [
-        { name: "Hub", href: "/tanjia", icon: Home, exact: true },
+        { name: "Home", href: "/tanjia", icon: Home, exact: true },
         { name: "Today", href: "/tanjia/today", icon: CalendarDays },
       ],
     },
@@ -155,6 +155,8 @@ export function Sidebar() {
         { name: "Meetings", href: "/tanjia/meetings", icon: Video, badge: metrics.upcomingMeetings },
         { name: "Scheduler", href: "/tanjia/scheduler", icon: Clock },
         { name: "Followups", href: "/tanjia/followups", icon: Flag, badge: metrics.overdueFollowups },
+        { name: "Groups", href: "/tanjia/groups", icon: Users },
+        { name: "Referrals", href: "/tanjia/referrals", icon: Pin },
       ],
     },
     {

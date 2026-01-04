@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { requireAuthOrRedirect } from "@/lib/auth/redirect";
-import { AppShell } from "./components/app-shell";
+import { AppShell } from "../tanjia/components/app-shell";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -12,9 +12,8 @@ async function signOutAction() {
   await supabase.auth.signOut();
 }
 
-export default async function TanjiaLayout({ children }: { children: React.ReactNode }) {
-  // Ensure user is authenticated (redirects to /tanjia/login if not)
-  const { user } = await requireAuthOrRedirect();
+export default async function DemoLayout({ children }: { children: React.ReactNode }) {
+  await requireAuthOrRedirect();
 
   return (
     <AppShell onSignOut={signOutAction}>

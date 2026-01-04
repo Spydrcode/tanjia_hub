@@ -134,29 +134,53 @@ export function DecideClientV2() {
           </Link>
         </div>
 
-        {/* Completion Status */}
+        {/* Completion / Onboarding Status */}
         {queueItems.length === 0 && (
-          <Card className="border-emerald-200 bg-emerald-50">
-            <CardContent className="p-6 text-center">
-              <CheckCircle className="mx-auto h-12 w-12 text-emerald-600 mb-3" />
-              <p className="text-lg font-semibold text-emerald-900">All caught up!</p>
-              <p className="mt-2 text-sm text-emerald-700">
-                No urgent items. Great time to strengthen relationships or research new leads.
-              </p>
-              <div className="mt-4 flex justify-center gap-3">
-                <Link href="/tanjia/map">
-                  <Button variant="secondary" size="sm">
-                    Check the map
-                  </Button>
-                </Link>
-                <Link href="/tanjia/tools/analyze">
-                  <Button variant="secondary" size="sm">
-                    Run research
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+          snapshot.pipeline.leadsActive === 0 ? (
+            <Card className="border-neutral-200 bg-white">
+              <CardContent className="p-6 text-center">
+                <AlertCircle className="mx-auto h-12 w-12 text-neutral-400 mb-3" />
+                <p className="text-lg font-semibold text-neutral-900">No leads yet</p>
+                <p className="mt-2 text-sm text-neutral-600">Add your first lead or connect a meeting so Tanjia can guide the next move.</p>
+                <div className="mt-4 flex flex-wrap justify-center gap-3">
+                  <Link href="/tanjia/leads?action=new">
+                    <Button size="sm">Add Lead</Button>
+                  </Link>
+                  <Link href="/tanjia/scheduler">
+                    <Button size="sm" variant="secondary">Open Scheduler</Button>
+                  </Link>
+                  <Link href="/tanjia/followups?action=new">
+                    <Button size="sm" variant="secondary">Create Followup</Button>
+                  </Link>
+                  <Link href="/tanjia/tools/analyze">
+                    <Button size="sm" variant="secondary">Run Research</Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-emerald-200 bg-emerald-50">
+              <CardContent className="p-6 text-center">
+                <CheckCircle className="mx-auto h-12 w-12 text-emerald-600 mb-3" />
+                <p className="text-lg font-semibold text-emerald-900">All caught up!</p>
+                <p className="mt-2 text-sm text-emerald-700">
+                  No urgent items. Great time to strengthen relationships or research new leads.
+                </p>
+                <div className="mt-4 flex justify-center gap-3">
+                  <Link href="/tanjia/map">
+                    <Button variant="secondary" size="sm">
+                      Check the map
+                    </Button>
+                  </Link>
+                  <Link href="/tanjia/tools/analyze">
+                    <Button variant="secondary" size="sm">
+                      Run research
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          )
         )}
       </div>
     </div>

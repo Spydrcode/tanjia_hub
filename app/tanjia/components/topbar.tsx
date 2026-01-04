@@ -77,6 +77,7 @@ const pageInfo: Record<string, { title: string; description: string }> = {
 export function Topbar({ onSignOut }: { onSignOut?: () => void }) {
   const pathname = usePathname();
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   // Get page info
   const getPageInfo = () => {
@@ -131,12 +132,44 @@ export function Topbar({ onSignOut }: { onSignOut?: () => void }) {
 
             {/* Right: Actions */}
             <div className="flex items-center gap-2">
-              <Link
-                href="/tanjia/share"
-                className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
-              >
-                Client View
-              </Link>
+              {/* Mode pill: show DEMO when path starts with /demo */}
+              {pathname?.startsWith('/demo') ? (
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">DEMO</span>
+                  <button
+                    disabled={isResetting}
+                    onClick={async () => {
+                      if (!confirm('Reset demo data? This will restore demo content for your workspace.')) return;
+                      setIsResetting(true);
+                      try {
+                        const res = await fetch('/api/demo/reset', { method: 'POST' });
+                        if (!res.ok) throw new Error('Reset failed');
+                        alert('Demo reset complete');
+                        // reload to show new data
+                        window.location.reload();
+                      } catch (e) {
+                        console.error(e);
+                        alert('Demo reset failed');
+                      } finally {
+                        setIsResetting(false);
+                      }
+                    }}
+                    className="rounded-md bg-amber-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-amber-600"
+                  >
+                    {isResetting ? 'Resetting…' : 'Reset Demo'}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800">DIRECTOR</span>
+                  <Link
+                    href="/tanjia/share"
+                    className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                  >
+                    Client View
+                  </Link>
+                </div>
+              )}
 
               {onSignOut && (
                 <Button variant="ghost" size="sm" onClick={onSignOut}>

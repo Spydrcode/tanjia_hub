@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
 import { Loader2, MessageSquare, User, Lightbulb, Copy, Check } from "lucide-react";
@@ -15,77 +16,99 @@ type Props = {
 };
 
 const INTENTS = [
-  { key: 'first_reach', label: 'First reach-out', tone: 'Calm introduction' },
-  { key: 'followup', label: 'Follow-up', tone: 'Gentle check-in' },
-  { key: 'reschedule', label: 'Reschedule', tone: 'Understanding + next step' },
-  { key: 'gentle_nudge', label: 'Gentle nudge', tone: 'Soft reminder' },
-] as const;
+  { key: 'reflect', label: 'Reflect', tone: 'Summarize what they said' },
+  { key: 'invite', label: 'Invite', tone: 'Open an invitation' },
+  { key: 'schedule', label: 'Schedule', tone: 'Propose a time' },
+  { key: 'encourage', label: 'Encourage', tone: 'Friendly nudge' },
+];
+
+const CHANNELS = [
+  { key: 'comment', label: 'Comment' },
+  { key: 'dm', label: 'DM' },
+  { key: 'email', label: 'Email' },
+];
 
 export function SupportClientV2({ leads, selectedLeadId }: Props) {
   const { snapshot, loading } = useDirectorSnapshot();
+  const searchParams = useSearchParams();
+
   const [leadId, setLeadId] = useState(selectedLeadId || '');
-  const [intent, setIntent] = useState<string>('followup');
+  const [intent, setIntent] = useState<string>('reflect');
+  const [channel, setChannel] = useState<string>('comment');
+  const [whatTheySaid, setWhatTheySaid] = useState<string>('');
   const [generating, setGenerating] = useState(false);
-  const [drafts, setDrafts] = useState<string[]>([]);
-  const [copied, setCopied] = useState<number | null>(null);
+  const [reply, setReply] = useState<string | null>(null);
+  const [followupQuestion, setFollowupQuestion] = useState<string | null>(null);
+  const [secondLookNote, setSecondLookNote] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const selectedLead = leads.find(l => l.id === leadId);
-
-  // Get lead context from snapshot
   const leadContext = snapshot?.recentActivity.latestMessages.find(m => m.leadId === leadId);
 
-  const handleGenerate = async () => {
-    if (!leadId) return;
-    
-    setGenerating(true);
+  // Prefill from composer/sessionStorage or query param
+  useEffect(() => {
     try {
-      const response = await fetch('/api/tanjia/networking/generate', {
+      const from = searchParams?.get('from');
+      const action = searchParams?.get('composer_action') || sessionStorage.getItem('tanjia_composer_action');
+      const stored = sessionStorage.getItem('tanjia_composer_text');
+      if (from === 'composer' && stored) {
+        setWhatTheySaid(stored);
+        // map composer_action to defaults
+        if (action === 'reply') {
+          setChannel('comment');
+          setIntent('reflect');
+        }
+        // clear keys
+        sessionStorage.removeItem('tanjia_composer_text');
+        sessionStorage.removeItem('tanjia_composer_action');
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [searchParams]);
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    setReply(null);
+    setFollowupQuestion(null);
+    setSecondLookNote(null);
+
+    try {
+      const payload: any = {
+        channel: channel as 'comment' | 'dm' | 'email',
+        intent: intent as 'reflect' | 'invite' | 'schedule' | 'encourage',
+        what_they_said: whatTheySaid,
+        notes: null,
+      };
+
+      if (leadId) payload.leadId = leadId;
+
+      const res = await fetch('/api/tanjia/networking/reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          leadId,
-          intent,
-          context: leadContext?.body,
-        }),
+        body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error('Failed to generate');
+      if (!res.ok) throw new Error('Generation failed');
 
-      const data = await response.json();
-      setDrafts(data.drafts || []);
-    } catch (error) {
-      console.error('Generate error:', error);
+      const data = await res.json();
+      setReply(data.reply || data.reply_text || null);
+      setFollowupQuestion(data.followupQuestion || data.followup_question || null);
+      setSecondLookNote(data.secondLookNote || data.second_look_note || null);
+    } catch (err) {
+      console.error('Support generate error', err);
     } finally {
       setGenerating(false);
     }
   };
 
-  const handleCopy = (index: number, text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(index);
-    setTimeout(() => setCopied(null), 2000);
-  };
-
-  const handleSave = async (draftText: string) => {
-    if (!leadId) return;
-
+  const handleCopy = async (text?: string) => {
     try {
-      const response = await fetch('/api/tanjia/networking/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          leadId,
-          intent,
-          draft: draftText,
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to save');
-
-      // Refresh snapshot to show draft in recent activity
-      window.location.reload();
-    } catch (error) {
-      console.error('Save error:', error);
+      await navigator.clipboard.writeText(text || reply || '');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      console.error('Copy failed', e);
     }
   };
 
@@ -105,9 +128,7 @@ export function SupportClientV2({ leads, selectedLeadId }: Props) {
       }} />}
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Left Column: Context + Intent */}
         <div className="space-y-6">
-          {/* Lead Selector */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
@@ -121,7 +142,7 @@ export function SupportClientV2({ leads, selectedLeadId }: Props) {
                 onChange={(e) => setLeadId(e.target.value)}
                 className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
               >
-                <option value="">Select a lead...</option>
+                <option value="">(No lead) — use pasted text only</option>
                 {leads.map(lead => (
                   <option key={lead.id} value={lead.id}>{lead.name}</option>
                 ))}
@@ -138,111 +159,84 @@ export function SupportClientV2({ leads, selectedLeadId }: Props) {
             </CardContent>
           </Card>
 
-          {/* Lead Context Snapshot */}
-          {selectedLead && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">What We Know</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {selectedLead.website && (
-                  <div>
-                    <p className="text-xs font-medium text-neutral-600">Website</p>
-                    <p className="text-sm text-neutral-900">{selectedLead.website}</p>
-                  </div>
-                )}
-
-                {selectedLead.notes && (
-                  <div>
-                    <p className="text-xs font-medium text-neutral-600">Notes</p>
-                    <p className="text-sm text-neutral-700">{selectedLead.notes.slice(0, 200)}</p>
-                  </div>
-                )}
-
-                {leadContext && (
-                  <div>
-                    <p className="text-xs font-medium text-neutral-600">Last interaction</p>
-                    <p className="text-sm text-neutral-700">{leadContext.body.slice(0, 150)}...</p>
-                    <p className="mt-1 text-xs text-neutral-500">
-                      {formatDistanceToNow(new Date(leadContext.createdAt), { addSuffix: true })}
-                    </p>
-                  </div>
-                )}
-
-                {!selectedLead.website && !selectedLead.notes && !leadContext && (
-                  <p className="text-sm text-neutral-500">No context yet — add notes or run research</p>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Intent Picker */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <Lightbulb className="h-5 w-5" />
-                What's the Intent?
+                <MessageSquare className="h-5 w-5" />
+                What did they say?
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {INTENTS.map(i => (
-                  <button
-                    key={i.key}
-                    onClick={() => setIntent(i.key)}
-                    className={`w-full rounded-lg border p-3 text-left transition ${
-                      intent === i.key
-                        ? 'border-emerald-500 bg-emerald-50'
-                        : 'border-neutral-200 hover:border-emerald-300 hover:bg-emerald-50/50'
-                    }`}
-                  >
-                    <p className="text-sm font-medium text-neutral-900">{i.label}</p>
-                    <p className="text-xs text-neutral-600">{i.tone}</p>
-                  </button>
-                ))}
+              <textarea
+                value={whatTheySaid}
+                onChange={(e) => setWhatTheySaid(e.target.value)}
+                placeholder="Paste a message, comment, or call notes…"
+                className="w-full resize-none rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+                rows={6}
+              />
+
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <select
+                  value={channel}
+                  onChange={(e) => setChannel(e.target.value)}
+                  className="rounded-lg border border-neutral-200 px-3 py-2 text-sm"
+                >
+                  {CHANNELS.map(c => (
+                    <option key={c.key} value={c.key}>{c.label}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={intent}
+                  onChange={(e) => setIntent(e.target.value)}
+                  className="rounded-lg border border-neutral-200 px-3 py-2 text-sm"
+                >
+                  {INTENTS.map(i => (
+                    <option key={i.key} value={i.key}>{i.label}</option>
+                  ))}
+                </select>
               </div>
 
               <Button
                 onClick={handleGenerate}
-                disabled={!leadId || generating}
+                disabled={generating || !whatTheySaid.trim()}
                 className="mt-4 w-full"
               >
                 {generating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Drafting...
+                    Generating...
                   </>
                 ) : (
-                  'Generate Drafts'
+                  'Generate Reply'
                 )}
               </Button>
             </CardContent>
           </Card>
         </div>
 
-        {/* Right Column: Drafts */}
         <div className="space-y-6">
-          {drafts.length === 0 && (
+          {!reply && (
             <Card>
-              <CardContent className="flex min-h-[400px] items-center justify-center p-6">
+              <CardContent className="flex min-h-[300px] items-center justify-center p-6">
                 <div className="text-center">
                   <MessageSquare className="mx-auto h-12 w-12 text-neutral-300 mb-3" />
-                  <p className="text-sm text-neutral-600">Select a lead and intent to generate drafts</p>
+                  <p className="text-sm text-neutral-600">Paste text and click "Generate Reply" to draft a response</p>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {drafts.map((draft, idx) => (
-            <Card key={idx} className={idx === 0 ? 'border-2 border-emerald-500' : ''}>
+          {reply && (
+            <Card className="border-2 border-emerald-500">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between text-base">
-                  <span>{idx === 0 ? 'Primary Draft' : `Alternate ${idx}`}</span>
+                  <span>Draft Reply</span>
                   <button
-                    onClick={() => handleCopy(idx, draft)}
+                    onClick={() => handleCopy(reply)}
                     className="text-neutral-500 hover:text-neutral-700"
                   >
-                    {copied === idx ? (
+                    {copied ? (
                       <Check className="h-4 w-4 text-emerald-600" />
                     ) : (
                       <Copy className="h-4 w-4" />
@@ -252,29 +246,31 @@ export function SupportClientV2({ leads, selectedLeadId }: Props) {
               </CardHeader>
               <CardContent>
                 <p className="whitespace-pre-wrap text-sm text-neutral-700 leading-relaxed">
-                  {draft}
+                  {reply}
                 </p>
 
+                {followupQuestion && (
+                  <div className="mt-4 rounded-md border border-neutral-100 bg-neutral-50 p-3">
+                    <p className="text-xs font-semibold text-neutral-600">Follow-up question</p>
+                    <p className="mt-1 text-sm text-neutral-700">{followupQuestion}</p>
+                  </div>
+                )}
+
+                {secondLookNote && (
+                  <div className="mt-3 rounded-md border border-neutral-100 bg-neutral-50 p-3">
+                    <p className="text-xs font-semibold text-neutral-600">Second look note</p>
+                    <p className="mt-1 text-sm text-neutral-700">{secondLookNote}</p>
+                  </div>
+                )}
+
                 <div className="mt-4 flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => handleSave(draft)}
-                    className="flex-1"
-                  >
-                    Save Draft
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleCopy(idx, draft)}
-                    className="flex-1"
-                  >
-                    {copied === idx ? 'Copied!' : 'Copy'}
+                  <Button size="sm" variant="secondary" onClick={() => handleCopy(reply)} className="flex-1">
+                    {copied ? 'Copied!' : 'Copy Reply'}
                   </Button>
                 </div>
               </CardContent>
             </Card>
-          ))}
+          )}
         </div>
       </div>
     </div>
