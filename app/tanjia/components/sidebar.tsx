@@ -45,6 +45,7 @@ type NavSection = {
 
 export function Sidebar() {
   const pathname = usePathname();
+  const basePath = pathname?.startsWith("/demo") ? "/demo" : "/tanjia";
   const [metrics, setMetrics] = useState<{
     upcomingMeetings: number;
     overdueFollowups: number;
@@ -110,14 +111,16 @@ export function Sidebar() {
   const handleNavClick = (item: NavItem) => {
     // Track in recents (skip Hub/Today unless nothing else exists)
     const skipRecents = ["/tanjia", "/tanjia/today", "/tanjia/system", "/tanjia/share"];
-    const shouldTrack = !skipRecents.includes(item.href) || recents.length === 0;
+    const resolvedHref = item.href.replace(/^\/tanjia/, basePath);
+    const resolvedSkip = skipRecents.map((href) => href.replace(/^\/tanjia/, basePath));
+    const shouldTrack = !resolvedSkip.includes(resolvedHref) || recents.length === 0;
 
     if (shouldTrack) {
       addRecent({
-        id: item.href,
+        id: resolvedHref,
         type: "page",
         title: item.name,
-        href: item.href,
+        href: resolvedHref,
         icon: item.icon.name,
       });
       // Refresh recents immediately
@@ -169,9 +172,9 @@ export function Sidebar() {
   ];
 
   const quickActions = [
-    { name: "New Lead", icon: UserPlus, href: "/tanjia/leads?action=new" },
-    { name: "New Meeting", icon: Plus, href: "/tanjia/meetings?action=new" },
-    { name: "Schedule Call", icon: Calendar, href: "/tanjia/scheduler" },
+    { name: "New Lead", icon: UserPlus, href: `${basePath}/leads?action=new` },
+    { name: "New Meeting", icon: Plus, href: `${basePath}/meetings?action=new` },
+    { name: "Schedule Call", icon: Calendar, href: `${basePath}/scheduler` },
   ];
 
   const isActive = (href: string, exact?: boolean) => {
@@ -186,7 +189,7 @@ export function Sidebar() {
       {/* Brand */}
       <div className="border-b border-neutral-200 px-4 py-4">
         <Link
-          href="/tanjia"
+          href={basePath}
           className="block rounded-lg bg-gradient-to-r from-neutral-900 via-neutral-800 to-neutral-900 px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.08em] text-white transition hover:opacity-90"
         >
           2ndmynd Hub
@@ -302,11 +305,14 @@ export function Sidebar() {
                   <div className="space-y-1">
                     {section.items.map((item) => {
                       const active = isActive(item.href, item.exact);
+                      const resolvedHref = item.href.replace(/^\/tanjia/, basePath);
+                      const testId = `nav-${item.name.toLowerCase().replace(/\s+/g, "-")}`;
                       return (
                         <Link
                           key={item.href}
-                          href={item.href}
+                          href={resolvedHref}
                           onClick={() => handleNavClick(item)}
+                          data-testid={testId}
                           className={cn(
                             "flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition",
                             active

@@ -1,10 +1,20 @@
 import { cookies, headers } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { publicEnv } from "@/src/lib/env";
+import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 
 export async function createSupabaseServerClient() {
   const headerList = await headers();
   const cookieStore = await cookies();
+
+  // 🔒 E2E auth bypass: If x-dev-bypass header is present in development,
+  // use service role client to bypass RLS for test data access
+  if (process.env.NODE_ENV !== "production") {
+    const devBypass = headerList.get("x-dev-bypass") === "1";
+    if (devBypass) {
+      return createSupabaseServiceRoleClient();
+    }
+  }
 
   return createServerClient(
     publicEnv.supabaseUrl,

@@ -8,6 +8,8 @@ test.describe('Demo click-test', () => {
     });
     expect(resetRes.ok()).toBeTruthy();
 
+    // Ensure browser requests also include the dev bypass headers so pages don't redirect
+    await page.setExtraHTTPHeaders({ 'x-dev-bypass': '1', 'x-dev-owner': '20000000-0000-0000-0000-000000000001' });
     // Open demo today
     await page.goto('/demo/today');
     await expect(page).not.toHaveTitle(/404|Not Found/);

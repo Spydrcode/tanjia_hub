@@ -53,7 +53,7 @@ export default async function DemoSchedulerPage({ searchParams }: { searchParams
         anchor="Calm link"
         eyebrow="Tanjia"
         description="Pick the smallest slot that fits. We'll keep it simple."
-        actionHref="/tanjia"
+        actionHref="/demo"
         actionLabel="Back to hub"
         actionVariant="ghost"
       />

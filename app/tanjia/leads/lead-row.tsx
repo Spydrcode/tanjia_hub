@@ -1,6 +1,7 @@
 'use client';
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { Badge } from "@/src/components/ui/badge";
@@ -18,6 +19,8 @@ type LeadRowProps = {
 };
 
 export function LeadRow({ lead, lastRun, nextDue }: LeadRowProps) {
+  const pathname = usePathname();
+  const basePath = pathname?.startsWith("/demo") ? "/demo" : "/tanjia";
   const host = lead.website ? lead.website.replace(/^https?:\/\//, "").split("/")[0] : "";
 
   return (
@@ -26,7 +29,9 @@ export function LeadRow({ lead, lastRun, nextDue }: LeadRowProps) {
       transition={{ duration: 0.15 }}
     >
       <Link
-        href={`/tanjia/leads/${lead.id}`}
+        href={`${basePath}/leads/${lead.id}`}
+        data-testid="lead-row"
+        data-lead-id={lead.id}
         className="flex flex-col gap-2 py-3 px-1 -mx-1 rounded"
       >
         <div className="flex items-center justify-between gap-2">

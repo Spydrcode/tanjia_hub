@@ -10,6 +10,8 @@ type PageHeaderProps = {
   actionHref?: string;
   actionOnClick?: () => void;
   actionVariant?: "primary" | "secondary" | "ghost" | "destructive";
+  actionDisabled?: boolean;
+  actionTooltip?: string;
   eyebrow?: string;
   anchor?: string;
   align?: "left" | "center";
@@ -24,6 +26,8 @@ export function PageHeader({
   actionHref,
   actionOnClick,
   actionVariant = "primary",
+  actionDisabled = false,
+  actionTooltip,
   eyebrow,
   anchor,
   align = "left",
@@ -31,7 +35,11 @@ export function PageHeader({
   children,
 }: PageHeaderProps) {
   const ActionButton = actionLabel ? (
-    actionHref ? (
+    actionDisabled ? (
+      <Button disabled title={actionTooltip} variant={actionVariant}>
+        {actionLabel}
+      </Button>
+    ) : actionHref ? (
       <Button asChild variant={actionVariant}>
         <a href={actionHref}>{actionLabel}</a>
       </Button>

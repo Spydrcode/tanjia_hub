@@ -1,11 +1,22 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Search, Plus } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Search } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { CommandPalette } from "./command-palette";
 import { useState, useEffect } from "react";
+
+const demoRouteAllowlist = [
+  "/today",
+  "/leads",
+  "/meetings",
+  "/followups",
+  "/support",
+  "/groups",
+  "/referrals",
+  "/scheduler",
+  "/decide",
+];
 
 const pageInfo: Record<string, { title: string; description: string }> = {
   "/tanjia": { 
@@ -76,8 +87,11 @@ const pageInfo: Record<string, { title: string; description: string }> = {
 
 export function Topbar({ onSignOut }: { onSignOut?: () => void }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const isDemo = Boolean(pathname?.startsWith("/demo"));
+  const [isDemoMenuOpen, setIsDemoMenuOpen] = useState(false);
 
   // Get page info
   const getPageInfo = () => {
@@ -91,6 +105,22 @@ export function Topbar({ onSignOut }: { onSignOut?: () => void }) {
   };
 
   const currentPage = getPageInfo();
+  const demoPathname = (path: string) => path.replace(/^\/demo/, "") || "/";
+  const isDemoRouteAllowed = (path: string) => {
+    const candidate = demoPathname(path);
+    return demoRouteAllowlist.some((route) => candidate === route || candidate.startsWith(`${route}/`));
+  };
+  const getSwitchTarget = () => {
+    const currentPath = pathname || "/";
+    const target = isDemo
+      ? currentPath.replace(/^\/demo/, "/tanjia")
+      : currentPath.replace(/^\/tanjia/, "/demo");
+
+    if (!isDemo && isDemoRouteAllowed(target)) return target;
+    if (!isDemo && !isDemoRouteAllowed(target)) return "/demo/today";
+    if (!target.startsWith("/tanjia")) return "/tanjia/today";
+    return target;
+  };
 
   // Global keyboard shortcut for command palette
   useEffect(() => {
@@ -104,6 +134,24 @@ export function Topbar({ onSignOut }: { onSignOut?: () => void }) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  const handleResetDemo = async () => {
+    if (!confirm("Reset demo data? This will restore demo content for your workspace.")) return;
+    setIsResetting(true);
+    try {
+      const res = await fetch("/api/demo/reset", { method: "POST" });
+      if (!res.ok) throw new Error("Reset failed");
+      alert("Demo reset complete");
+      // reload to show new data
+      window.location.reload();
+    } catch (e) {
+      console.error(e);
+      alert("Demo reset failed");
+    } finally {
+      setIsResetting(false);
+      setIsDemoMenuOpen(false);
+    }
+  };
 
   return (
     <>
@@ -121,6 +169,7 @@ export function Topbar({ onSignOut }: { onSignOut?: () => void }) {
             {/* Center: Search (triggers command palette) */}
             <button
               onClick={() => setIsPaletteOpen(true)}
+              data-testid="topbar-search"
               className="flex min-w-[300px] items-center gap-2 rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-500 transition hover:border-neutral-300 hover:bg-neutral-50"
             >
               <Search className="h-4 w-4" />
@@ -135,39 +184,49 @@ export function Topbar({ onSignOut }: { onSignOut?: () => void }) {
               {/* Mode pill: show DEMO when path starts with /demo */}
               {pathname?.startsWith('/demo') ? (
                 <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">DEMO</span>
+                  <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800" data-testid="topbar-mode-pill">DEMO</span>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsDemoMenuOpen((open) => !open)}
+                      data-testid="topbar-demo-menu"
+                      className="rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50"
+                      aria-label="Demo actions"
+                    >
+                      ...
+                    </button>
+                    {isDemoMenuOpen && (
+                      <div className="absolute right-0 z-10 mt-2 w-44 rounded-md border border-neutral-200 bg-white py-1 shadow-lg">
+                        <button
+                          type="button"
+                          disabled={isResetting}
+                          onClick={handleResetDemo}
+                          data-testid="topbar-reset-demo"
+                          className="w-full px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:text-neutral-400"
+                        >
+                          {isResetting ? "Resetting..." : "Reset demo data"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   <button
-                    disabled={isResetting}
-                    onClick={async () => {
-                      if (!confirm('Reset demo data? This will restore demo content for your workspace.')) return;
-                      setIsResetting(true);
-                      try {
-                        const res = await fetch('/api/demo/reset', { method: 'POST' });
-                        if (!res.ok) throw new Error('Reset failed');
-                        alert('Demo reset complete');
-                        // reload to show new data
-                        window.location.reload();
-                      } catch (e) {
-                        console.error(e);
-                        alert('Demo reset failed');
-                      } finally {
-                        setIsResetting(false);
-                      }
-                    }}
-                    className="rounded-md bg-amber-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-amber-600"
+                    onClick={() => router.push(getSwitchTarget())}
+                    data-testid="topbar-switch-mode"
+                    className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
                   >
-                    {isResetting ? 'Resetting…' : 'Reset Demo'}
+                    Switch to Director
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800">DIRECTOR</span>
-                  <Link
-                    href="/tanjia/share"
+                  <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800" data-testid="topbar-mode-pill">DIRECTOR</span>
+                  <button
+                    onClick={() => router.push(getSwitchTarget())}
+                    data-testid="topbar-switch-mode"
                     className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
                   >
-                    Client View
-                  </Link>
+                    Switch to Demo
+                  </button>
                 </div>
               )}
 
@@ -186,3 +245,4 @@ export function Topbar({ onSignOut }: { onSignOut?: () => void }) {
     </>
   );
 }
+

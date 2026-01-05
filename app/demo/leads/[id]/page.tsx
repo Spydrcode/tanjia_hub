@@ -15,7 +15,7 @@ import {
 import { requireAuthOrRedirect } from "@/lib/auth/redirect";
 import { PageShell } from "@/src/components/ui/page-shell";
 import { IntentHeader } from "@/src/components/ui/intent-header";
-import { PinButton } from "../../components/pin-button";
+import { PinButton } from "@/app/tanjia/components/pin-button";
 import { DEMO_WORKSPACE_ID } from "@/src/lib/workspaces/constants";
 
 export const metadata: Metadata = {
@@ -26,16 +26,22 @@ export const metadata: Metadata = {
 
 export default async function DemoLeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: leadId } = await params;
-  const { supabase } = await requireAuthOrRedirect();
+  const { supabase, user } = await requireAuthOrRedirect();
 
-  const { data: lead } = await supabase
+  const leadWithWorkspace = await supabase
     .from("leads")
     .select("*")
     .eq("id", leadId)
     .eq("workspace_id", DEMO_WORKSPACE_ID)
     .single();
 
-  const { data: snapshots } = await supabase
+  const leadLegacy = leadWithWorkspace.error?.message?.includes("workspace_id")
+    ? await supabase.from("leads").select("*").eq("id", leadId).eq("owner_id", user.id).single()
+    : null;
+
+  const lead = leadWithWorkspace.data || leadLegacy?.data;
+
+  const snapshotsWithWorkspace = await supabase
     .from("lead_snapshots")
     .select("id, created_at, summary, extracted_json")
     .eq("lead_id", leadId)
@@ -43,12 +49,33 @@ export default async function DemoLeadDetailPage({ params }: { params: Promise<{
     .order("created_at", { ascending: false })
     .limit(3);
 
-  const { data: followups } = await supabase
+  const snapshotsLegacy = snapshotsWithWorkspace.error?.message?.includes("workspace_id")
+    ? await supabase
+        .from("lead_snapshots")
+        .select("id, created_at, summary, extracted_json")
+        .eq("lead_id", leadId)
+        .order("created_at", { ascending: false })
+        .limit(3)
+    : null;
+
+  const snapshots = snapshotsWithWorkspace.data || snapshotsLegacy?.data;
+
+  const followupsWithWorkspace = await supabase
     .from("followups")
     .select("id, note, due_at, done, created_at")
     .eq("lead_id", leadId)
     .eq("workspace_id", DEMO_WORKSPACE_ID)
     .order("due_at", { ascending: true });
+
+  const followupsLegacy = followupsWithWorkspace.error?.message?.includes("workspace_id")
+    ? await supabase
+        .from("followups")
+        .select("id, note, due_at, done, created_at")
+        .eq("lead_id", leadId)
+        .order("due_at", { ascending: true })
+    : null;
+
+  const followups = followupsWithWorkspace.data || followupsLegacy?.data;
 
   const activeLead = lead;
 

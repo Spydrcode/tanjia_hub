@@ -121,7 +121,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
           <LeadsFilters status={statusFilter} snapshot={snapshotFilter} q={q} />
 
           {filtered.length > 0 ? (
-            <div className="flex flex-col divide-y divide-neutral-200">
+            <div className="flex flex-col divide-y divide-neutral-200" data-testid="leads-list">
               {filtered.map((lead) => {
                 const lastRun = lastSnapshotMap.get(lead.id);
                 const nextDue = nextFollowupMap.get(lead.id);

@@ -9,6 +9,29 @@ import { MeetingResultsResponseSchema } from "@/src/lib/agents/schemas";
 import { tryParseWithRepair } from "@/src/lib/agents/repair";
 import { quietFounderRules, jsonOnlyRule } from "@/src/lib/agents/prompt-kits";
 
+async function assertMeetingWorkspaceAccess(
+  supabase: Awaited<ReturnType<typeof requireAuthOrRedirect>>["supabase"],
+  meetingId: string,
+  userId: string,
+) {
+  const { data: meeting, error: meetingError } = await supabase
+    .from("meetings")
+    .select("id, workspace_id")
+    .eq("id", meetingId)
+    .single();
+  if (meetingError || !meeting) throw new Error("Meeting not found");
+
+  const { data: membership, error: membershipError } = await supabase
+    .from("workspace_members")
+    .select("id")
+    .eq("workspace_id", meeting.workspace_id)
+    .eq("owner_id", userId)
+    .maybeSingle();
+
+  if (membershipError || !membership) throw new Error("Not authorized");
+  return meeting;
+}
+
 export type MeetingPayload = {
   title: string;
   groupName?: string;
@@ -44,6 +67,7 @@ export async function createMeeting(payload: MeetingPayload) {
 
 export async function startMeeting(meetingId: string) {
   const { supabase, user } = await requireAuthOrRedirect();
+  await assertMeetingWorkspaceAccess(supabase, meetingId, user.id);
   const { error } = await supabase
     .from("meetings")
     .update({ status: "in_progress", started_at: formatISO(new Date()) })
@@ -68,6 +92,7 @@ export type InteractionPayload = {
 
 export async function addInteraction(payload: InteractionPayload) {
   const { supabase, user } = await requireAuthOrRedirect();
+  await assertMeetingWorkspaceAccess(supabase, payload.meetingId, user.id);
   const { error } = await supabase.from("meeting_interactions").insert({
     meeting_id: payload.meetingId,
     owner_id: user.id,
@@ -86,6 +111,7 @@ export async function addInteraction(payload: InteractionPayload) {
 
 export async function updateInteraction(interactionId: string, meetingId: string, notes?: string, priority?: string) {
   const { supabase, user } = await requireAuthOrRedirect();
+  await assertMeetingWorkspaceAccess(supabase, meetingId, user.id);
   const { error } = await supabase
     .from("meeting_interactions")
     .update({
@@ -107,6 +133,7 @@ export async function createLeadFromInteraction(interactionId: string) {
     .eq("owner_id", user.id)
     .single();
   if (!interaction) throw new Error("Interaction not found");
+  await assertMeetingWorkspaceAccess(supabase, interaction.meeting_id, user.id);
 
   const leadName = interaction.person_name || interaction.company_name || "Lead";
   const leadId = await createLead({
@@ -215,6 +242,7 @@ ${jsonOnlyRule}
 
 export async function endMeetingAndGenerateResults(meetingId: string) {
   const { supabase, user } = await requireAuthOrRedirect();
+  await assertMeetingWorkspaceAccess(supabase, meetingId, user.id);
   const nowIso = formatISO(new Date());
   const { error } = await supabase
     .from("meetings")
@@ -237,6 +265,7 @@ export type RecordingPayload = {
 
 export async function updateMeetingRecording(payload: RecordingPayload) {
   const { supabase, user } = await requireAuthOrRedirect();
+  await assertMeetingWorkspaceAccess(supabase, payload.meetingId, user.id);
   const { error } = await supabase
     .from("meetings")
     .update({

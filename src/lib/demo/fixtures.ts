@@ -7,9 +7,9 @@ export const DEMO_OWNER_PLACEHOLDER = '00000000-0000-0000-0000-000000000000';
 
 export const DEMO_FIXTURES = {
   networking_groups: [
-    { id: '30000000-0000-0000-0000-000000000001', name: 'Founders Breakfast', description: 'Monthly local founders breakfast', workspace_id: DEMO_WORKSPACE_ID },
-    { id: '30000000-0000-0000-0000-000000000002', name: 'Product People', description: 'Product-focused peer group', workspace_id: DEMO_WORKSPACE_ID },
-    { id: '30000000-0000-0000-0000-000000000003', name: 'Design Circle', description: 'Design critique circle', workspace_id: DEMO_WORKSPACE_ID },
+    { id: '30000000-0000-0000-0000-000000000001', owner_id: DEMO_OWNER_PLACEHOLDER, name: 'Founders Breakfast', description: 'Monthly local founders breakfast', workspace_id: DEMO_WORKSPACE_ID },
+    { id: '30000000-0000-0000-0000-000000000002', owner_id: DEMO_OWNER_PLACEHOLDER, name: 'Product People', description: 'Product-focused peer group', workspace_id: DEMO_WORKSPACE_ID },
+    { id: '30000000-0000-0000-0000-000000000003', owner_id: DEMO_OWNER_PLACEHOLDER, name: 'Design Circle', description: 'Design critique circle', workspace_id: DEMO_WORKSPACE_ID },
   ],
 
   leads: [
@@ -87,11 +87,11 @@ export const DEMO_FIXTURES = {
   ],
 
   referrals: [
-    { id: '31000000-0000-0000-0000-000000000001', from_lead_id: '20000000-0000-0000-0000-000000000001', to_lead_id: '20000000-0000-0000-0000-000000000002', note: 'Intro to CTO', workspace_id: DEMO_WORKSPACE_ID },
-    { id: '31000000-0000-0000-0000-000000000002', from_lead_id: '20000000-0000-0000-0000-000000000003', to_lead_id: '20000000-0000-0000-0000-000000000005', note: 'Referral for sustainability', workspace_id: DEMO_WORKSPACE_ID },
-    { id: '31000000-0000-0000-0000-000000000003', from_lead_id: '20000000-0000-0000-0000-000000000004', to_lead_id: '20000000-0000-0000-0000-000000000006', note: 'Referral', workspace_id: DEMO_WORKSPACE_ID },
-    { id: '31000000-0000-0000-0000-000000000004', from_lead_id: '20000000-0000-0000-0000-000000000002', to_lead_id: '20000000-0000-0000-0000-000000000003', note: 'Connect designer', workspace_id: DEMO_WORKSPACE_ID },
-    { id: '31000000-0000-0000-0000-000000000005', from_lead_id: '20000000-0000-0000-0000-000000000005', to_lead_id: '20000000-0000-0000-0000-000000000001', note: 'Follow-up intro', workspace_id: DEMO_WORKSPACE_ID },
+    { id: '31000000-0000-0000-0000-000000000001', owner_id: DEMO_OWNER_PLACEHOLDER, from_lead_id: '20000000-0000-0000-0000-000000000001', to_lead_id: '20000000-0000-0000-0000-000000000002', note: 'Intro to CTO', workspace_id: DEMO_WORKSPACE_ID },
+    { id: '31000000-0000-0000-0000-000000000002', owner_id: DEMO_OWNER_PLACEHOLDER, from_lead_id: '20000000-0000-0000-0000-000000000003', to_lead_id: '20000000-0000-0000-0000-000000000005', note: 'Referral for sustainability', workspace_id: DEMO_WORKSPACE_ID },
+    { id: '31000000-0000-0000-0000-000000000003', owner_id: DEMO_OWNER_PLACEHOLDER, from_lead_id: '20000000-0000-0000-0000-000000000004', to_lead_id: '20000000-0000-0000-0000-000000000006', note: 'Referral', workspace_id: DEMO_WORKSPACE_ID },
+    { id: '31000000-0000-0000-0000-000000000004', owner_id: DEMO_OWNER_PLACEHOLDER, from_lead_id: '20000000-0000-0000-0000-000000000002', to_lead_id: '20000000-0000-0000-0000-000000000003', note: 'Connect designer', workspace_id: DEMO_WORKSPACE_ID },
+    { id: '31000000-0000-0000-0000-000000000005', owner_id: DEMO_OWNER_PLACEHOLDER, from_lead_id: '20000000-0000-0000-0000-000000000005', to_lead_id: '20000000-0000-0000-0000-000000000001', note: 'Follow-up intro', workspace_id: DEMO_WORKSPACE_ID },
   ],
 };
 

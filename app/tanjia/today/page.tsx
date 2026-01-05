@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { requireAuthOrRedirect } from "@/lib/auth/redirect";
 import { GradientHeading } from "@/src/components/ui/gradient-heading";
 import Link from "next/link";
@@ -98,7 +98,7 @@ export default async function TodayPage() {
       <div className="space-y-2">
         <GradientHeading leading="Your" anchor="Today" trailing="Dashboard" size="lg" />
         <p className="text-sm text-neutral-500">
-          {format(now, "EEEE, MMMM d, yyyy")} · Quick view of what needs attention
+          {format(now, "EEEE, MMMM d, yyyy")} Â· Quick view of what needs attention
         </p>
       </div>
 
@@ -115,10 +115,10 @@ export default async function TodayPage() {
               <h2 className="text-lg font-semibold text-neutral-900">Upcoming Meetings</h2>
             </div>
             <Link
-              href="/tanjia/meetings"
+              href="/tanjia/meetings" data-testid="today-upcoming-meetings-view-all"
               className="text-sm font-medium text-emerald-600 hover:text-emerald-700"
             >
-              View all →
+              View all â†’
             </Link>
           </div>
           
@@ -135,7 +135,7 @@ export default async function TodayPage() {
                       <h3 className="font-medium text-neutral-900">{meeting.title}</h3>
                       <p className="mt-1 text-sm text-neutral-500">
                         {format(parseISO(meeting.start_at), "MMM d, h:mm a")}
-                        {meeting.group_name && ` · ${meeting.group_name}`}
+                        {meeting.group_name && ` Â· ${meeting.group_name}`}
                       </p>
                     </div>
                     {meeting.status === "in_progress" && (
@@ -175,10 +175,10 @@ export default async function TodayPage() {
               <h2 className="text-lg font-semibold text-neutral-900">Followups</h2>
             </div>
             <Link
-              href="/tanjia/followups"
+              href="/tanjia/followups" data-testid="today-followups-view-all"
               className="text-sm font-medium text-emerald-600 hover:text-emerald-700"
             >
-              View all →
+              View all â†’
             </Link>
           </div>
 
@@ -247,7 +247,7 @@ export default async function TodayPage() {
               href="/tanjia/leads"
               className="text-sm font-medium text-emerald-600 hover:text-emerald-700"
             >
-              View all →
+              View all â†’
             </Link>
           </div>
 
@@ -316,3 +316,4 @@ export default async function TodayPage() {
     </div>
   );
 }
+

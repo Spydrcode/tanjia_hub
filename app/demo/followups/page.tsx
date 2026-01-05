@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { requireAuthOrRedirect } from "@/lib/auth/redirect";
-import { featureFlags } from "@/src/lib/env";
-import { demoFollowups, demoLeads } from "@/lib/demo-data";
 import { DEMO_WORKSPACE_ID } from "@/src/lib/workspaces/constants";
 import { PageShell } from "@/src/components/ui/page-shell";
 import { IntentHeader } from "@/src/components/ui/intent-header";
@@ -23,28 +21,34 @@ type FollowupItem = {
 };
 
 export default async function DemoFollowupsPage() {
-  const { supabase } = await requireAuthOrRedirect();
-  const followupData =
-    (
-      await supabase
+  const { supabase, user } = await requireAuthOrRedirect();
+
+  const withWorkspace = await supabase
+    .from("followups")
+    .select("id, lead_id, note, due_at, done, created_at, leads(name)")
+    .eq('workspace_id', DEMO_WORKSPACE_ID)
+    .order("created_at", { ascending: false });
+
+  let followupData: any[] = (withWorkspace.data || []) as any[];
+  if (withWorkspace.error?.message?.includes("workspace_id")) {
+    const leadsRes = await supabase.from("leads").select("id").eq("owner_id", user.id);
+    const leadIds = (leadsRes.data || []).map((l: any) => l.id).filter(Boolean);
+    if (leadIds.length) {
+      const legacy = await supabase
         .from("followups")
         .select("id, lead_id, note, due_at, done, created_at, leads(name)")
-        .eq('workspace_id', DEMO_WORKSPACE_ID)
-        .order("created_at", { ascending: false })
-    ).data || [];
+        .in("lead_id", leadIds)
+        .order("created_at", { ascending: false });
+      followupData = (legacy.data || []) as any[];
+    } else {
+      followupData = [];
+    }
+  }
 
-  const items: FollowupItem[] = featureFlags.showcaseMode
-    ? Object.entries(demoFollowups).flatMap(([leadId, list]) =>
-        list.map((item) => ({
-          ...item,
-          lead_id: leadId,
-          leads: { name: demoLeads.find((l) => l.id === leadId)?.name || "Demo lead" },
-        })),
-      )
-    : (followupData as FollowupItem[]).map((item) => ({
-        ...item,
-        leads: Array.isArray(item.leads) ? item.leads[0] : item.leads,
-      }));
+  const items: FollowupItem[] = (followupData as FollowupItem[]).map((item) => ({
+    ...item,
+    leads: Array.isArray(item.leads) ? item.leads[0] : item.leads,
+  }));
 
   async function markDone(id: string) {
     "use server";

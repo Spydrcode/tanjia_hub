@@ -3,8 +3,7 @@ import { PageShell } from '@/src/components/ui/page-shell';
 import { ZoneHeader } from '@/src/components/ui/zone-header';
 import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-
-const DEMO_WS = '22222222-2222-2222-2222-222222222222';
+import { DEMO_WORKSPACE_ID } from '@/src/lib/workspaces/constants';
 
 export default async function DemoReferralsPage() {
   await requireAuthOrRedirect();
@@ -13,12 +12,12 @@ export default async function DemoReferralsPage() {
   const { data: referrals } = await supabase
     .from('referrals')
     .select('*')
-    .eq('workspace_id', DEMO_WS)
+    .eq('workspace_id', DEMO_WORKSPACE_ID)
     .order('created_at', { ascending: false });
 
   return (
     <PageShell maxWidth="xl">
-      <ZoneHeader zone="referrals" title="Demo Referrals" anchor="Demo" question="Demo referrals." />
+      <ZoneHeader customBadge="Demo" title="Demo Referrals" anchor="Demo" question="Demo referrals." />
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -26,9 +25,9 @@ export default async function DemoReferralsPage() {
           <Link href="/demo/referrals?action=new" className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white">New Referral</Link>
         </div>
 
-        <div className="grid gap-3">
+        <div className="grid gap-3" data-testid="referrals-list">
           {(referrals || []).map((r: any) => (
-            <div key={r.id} className="rounded-lg border p-3">
+            <div key={r.id} className="rounded-lg border p-3" data-testid="referral-row" data-referral-id={r.id}>
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-medium">{r.to_name || r.from_person}</div>

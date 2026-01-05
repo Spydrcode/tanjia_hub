@@ -38,7 +38,7 @@ export default async function MeetingsPage() {
   const past = meetings.filter((m) => m.start_at < nowIso);
 
   const renderCard = (m: Meeting) => (
-    <Card key={m.id} className={`shadow-sm bg-gradient-to-br ${brandGradients.surface}`}>
+    <Card key={m.id} className={`shadow-sm bg-gradient-to-br ${brandGradients.surface}`} data-testid="meeting-row" data-meeting-id={m.id}>
       <CardContent className="space-y-2 p-4">
         <div className="flex items-center justify-between">
           <div>
@@ -82,7 +82,7 @@ export default async function MeetingsPage() {
           <h2 className="text-lg font-semibold text-neutral-900">Upcoming</h2>
           <p className="text-sm text-neutral-600">{upcoming.length} scheduled</p>
         </div>
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2" data-testid="meetings-list">
           {upcoming.length ? upcoming.map(renderCard) : <p className="text-sm text-neutral-600">No upcoming meetings.</p>}
         </div>
       </section>

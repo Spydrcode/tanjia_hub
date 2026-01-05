@@ -26,20 +26,29 @@ type Meeting = {
 };
 
 export default async function DemoMeetingsPage() {
-  const { supabase } = await requireAuthOrRedirect();
+  const { supabase, user } = await requireAuthOrRedirect();
   const nowIso = new Date().toISOString();
-  const { data } = await supabase
+
+  const withWorkspace = await supabase
     .from("meetings")
     .select("id, title, group_name, start_at, status, location_name, address")
     .eq('workspace_id', DEMO_WORKSPACE_ID)
     .order("start_at", { ascending: true });
 
-  const meetings: Meeting[] = data || [];
+  const legacy = withWorkspace.error?.message?.includes("workspace_id")
+    ? await supabase
+        .from("meetings")
+        .select("id, title, group_name, start_at, status, location_name, address")
+        .eq("owner_id", user.id)
+        .order("start_at", { ascending: true })
+    : null;
+
+  const meetings: Meeting[] = (withWorkspace.data || legacy?.data || []) as Meeting[];
   const upcoming = meetings.filter((m) => m.start_at >= nowIso);
   const past = meetings.filter((m) => m.start_at < nowIso);
 
   const renderCard = (m: Meeting) => (
-    <Card key={m.id} className={`shadow-sm bg-gradient-to-br ${brandGradients.surface}`}>
+    <Card key={m.id} className={`shadow-sm bg-gradient-to-br ${brandGradients.surface}`} data-testid="meeting-row" data-meeting-id={m.id}>
       <CardContent className="space-y-2 p-4">
         <div className="flex items-center justify-between">
           <div>
@@ -74,8 +83,9 @@ export default async function DemoMeetingsPage() {
         anchor="Flow"
         eyebrow="Tanjia"
         description="Plan, capture, and follow up quietly."
-        actionHref="/tanjia/meetings/new"
         actionLabel="New meeting"
+        actionDisabled
+        actionTooltip="Demo mode: read-only"
       />
 
       <section className="space-y-3">
@@ -83,7 +93,7 @@ export default async function DemoMeetingsPage() {
           <h2 className="text-lg font-semibold text-neutral-900">Upcoming</h2>
           <p className="text-sm text-neutral-600">{upcoming.length} scheduled</p>
         </div>
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2" data-testid="meetings-list">
           {upcoming.length ? upcoming.map(renderCard) : <p className="text-sm text-neutral-600">No upcoming meetings.</p>}
         </div>
       </section>

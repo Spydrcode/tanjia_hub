@@ -1,17 +1,27 @@
-import { defineConfig } from "@playwright/test";
+import { defineConfig, devices } from "@playwright/test";
+import * as dotenv from "dotenv";
+import * as path from "path";
+
+// Load .env.local for E2E config
+dotenv.config({ path: path.resolve(__dirname, ".env.local") });
+
+const baseURL = process.env.E2E_BASE_URL || "http://localhost:3000";
 
 export default defineConfig({
-  testDir: "./tests",
-  timeout: 30_000,
-  retries: 0,
+  testDir: "./tests/e2e",
+  timeout: 60_000,
+  retries: process.env.CI ? 1 : 0,
+  workers: process.env.CI ? 1 : undefined,
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:3000",
-    trace: "retain-on-failure",
+    baseURL,
+    trace: "on-first-retry",
+    screenshot: "only-on-failure",
+    video: "retain-on-failure",
   },
-  webServer: {
-    command: "npm run dev",
-    url: "http://127.0.0.1:3000",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  projects: [
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
+    },
+  ],
 });

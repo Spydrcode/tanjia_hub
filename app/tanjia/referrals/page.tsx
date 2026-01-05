@@ -18,7 +18,7 @@ export default async function ReferralsPage() {
 
   return (
     <PageShell maxWidth="xl">
-      <ZoneHeader zone="referrals" title="Referrals" anchor="Network" question="Track inbound and outbound referrals." />
+      <ZoneHeader customBadge="Network" title="Referrals" anchor="Network" question="Track inbound and outbound referrals." />
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -26,9 +26,9 @@ export default async function ReferralsPage() {
           <Link href="/tanjia/referrals?action=new" className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white">New Referral</Link>
         </div>
 
-        <div className="grid gap-3">
+        <div className="grid gap-3" data-testid="referrals-list">
           {(referrals || []).map((r: any) => (
-            <div key={r.id} className="rounded-lg border p-3">
+            <div key={r.id} className="rounded-lg border p-3" data-testid="referral-row" data-referral-id={r.id}>
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-medium">{r.to_name || r.from_person}</div>

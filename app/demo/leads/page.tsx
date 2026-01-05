@@ -1,10 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { requireAuthOrRedirect } from "@/lib/auth/redirect";
-import { featureFlags } from "@/src/lib/env";
-import { demoFollowups, demoLeads } from "@/lib/demo-data";
 import { DEMO_WORKSPACE_ID } from "@/src/lib/workspaces/constants";
-import { Badge } from "@/src/components/ui/badge";
 import { Card, CardContent } from "@/src/components/ui/card";
 import { PageShell } from "@/src/components/ui/page-shell";
 import { IntentHeader } from "@/src/components/ui/intent-header";
@@ -28,47 +24,67 @@ type LeadRowType = {
 };
 
 export default async function DemoLeadsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const { supabase } = await requireAuthOrRedirect();
+  const { supabase, user } = await requireAuthOrRedirect();
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q : "";
   const statusFilter = typeof params.status === "string" ? params.status : "all";
   const snapshotFilter = typeof params.snapshot === "string" ? params.snapshot : "any";
 
-  const leads: LeadRowType[] = featureFlags.showcaseMode
-    ? demoLeads
-    : (
-        await supabase
-          .from("leads")
-          .select("id, name, website, status, updated_at, created_at")
-          .eq('workspace_id', DEMO_WORKSPACE_ID)
-          .order("updated_at", { ascending: false })
-      ).data || [];
+  const leadsWithWorkspace = await supabase
+    .from("leads")
+    .select("id, name, website, status, updated_at, created_at")
+    .eq('workspace_id', DEMO_WORKSPACE_ID)
+    .order("updated_at", { ascending: false });
+
+  const leadsLegacy = leadsWithWorkspace.error?.message?.includes("workspace_id")
+    ? await supabase
+        .from("leads")
+        .select("id, name, website, status, updated_at, created_at")
+        .eq("owner_id", user.id)
+        .order("updated_at", { ascending: false })
+    : null;
+
+  const leads: LeadRowType[] = (leadsWithWorkspace.data || leadsLegacy?.data || []) as LeadRowType[];
 
   const leadIds = leads.map((l) => l.id);
 
-  const snapshots = featureFlags.showcaseMode
-    ? demoLeads.map((l) => ({ lead_id: l.id, created_at: l.updated_at || l.created_at || "" }))
-    : leadIds.length
-      ? (await supabase
-          .from("lead_snapshots")
-          .select("lead_id, created_at")
-          .in("lead_id", leadIds)
-          .eq('workspace_id', DEMO_WORKSPACE_ID)
-          .order("created_at", { ascending: false })).data || []
-      : [];
+  const snapshotsRes = leadIds.length
+    ? await supabase
+        .from("lead_snapshots")
+        .select("lead_id, created_at")
+        .in("lead_id", leadIds)
+        .eq('workspace_id', DEMO_WORKSPACE_ID)
+        .order("created_at", { ascending: false })
+    : null;
 
-  const followups = featureFlags.showcaseMode
-    ? Object.entries(demoFollowups).flatMap(([lead_id, list]) =>
-        list.map((f) => ({ ...f, lead_id })),
-      )
-    : leadIds.length
-      ? (await supabase
-          .from("followups")
-          .select("lead_id, due_at, done, note")
-          .in("lead_id", leadIds)
-          .eq('workspace_id', DEMO_WORKSPACE_ID)
-          .order("due_at", { ascending: true })).data || []
-      : [];
+  const snapshotsLegacyRes = leadIds.length && snapshotsRes?.error?.message?.includes("workspace_id")
+    ? await supabase
+        .from("lead_snapshots")
+        .select("lead_id, created_at")
+        .in("lead_id", leadIds)
+        .order("created_at", { ascending: false })
+    : null;
+
+  const snapshots = (snapshotsRes?.data || snapshotsLegacyRes?.data || []) as any[];
+
+  const followupsRes = leadIds.length
+    ? await supabase
+        .from("followups")
+        .select("lead_id, due_at, done, note")
+        .in("lead_id", leadIds)
+        .eq('workspace_id', DEMO_WORKSPACE_ID)
+        .order("due_at", { ascending: true })
+    : null;
+
+  const followupsLegacyRes = leadIds.length && followupsRes?.error?.message?.includes("workspace_id")
+    ? await supabase
+        .from("followups")
+        .select("lead_id, due_at, done, note")
+        .in("lead_id", leadIds)
+        .order("due_at", { ascending: true })
+    : null;
+
+  const followups = (followupsRes?.data || followupsLegacyRes?.data || []) as any[];
 
   const lastSnapshotMap = new Map<string, string>();
   const hasSnapshotMap = new Set<string>();
@@ -107,15 +123,17 @@ export default async function DemoLeadsPage({ searchParams }: { searchParams: Pr
       />
 
       <div className="flex items-center gap-3">
-        <Button asChild size="sm">
-          <Link href="/tanjia/leads/new">New lead</Link>
+        <Button size="sm" disabled title="Demo mode: read-only">
+          New lead
         </Button>
-        <Link
-          href="/tanjia/explore"
-          className="rounded-md bg-neutral-100 px-3 py-1.5 text-xs font-medium text-neutral-700 transition hover:bg-neutral-200"
+        <button
+          type="button"
+          disabled
+          title="Demo mode: read-only"
+          className="rounded-md bg-neutral-100 px-3 py-1.5 text-xs font-medium text-neutral-400"
         >
           Go to Listen
-        </Link>
+        </button>
       </div>
 
       <Card className="border-neutral-200 bg-white shadow-sm">
@@ -123,7 +141,7 @@ export default async function DemoLeadsPage({ searchParams }: { searchParams: Pr
           <LeadsFilters status={statusFilter} snapshot={snapshotFilter} q={q} />
 
           {filtered.length > 0 ? (
-            <div className="flex flex-col divide-y divide-neutral-200">
+            <div className="flex flex-col divide-y divide-neutral-200" data-testid="leads-list">
               {filtered.map((lead) => {
                 const lastRun = lastSnapshotMap.get(lead.id);
                 const nextDue = nextFollowupMap.get(lead.id);

@@ -35,7 +35,7 @@ export default async function MeetingDetailPage({ params }: { params: { id: stri
   }
 
   return (
-    <div className="flex flex-col gap-6 pb-12">
+    <div className="flex flex-col gap-6 pb-12" data-testid="meeting-detail">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm uppercase tracking-[0.08em] text-neutral-500">Meeting</p>
@@ -67,7 +67,7 @@ export default async function MeetingDetailPage({ params }: { params: { id: stri
 
           <div className="flex flex-wrap gap-2 pt-3">
             <form action={startAction}>
-              <Button type="submit" variant="secondary">
+              <Button type="submit" variant="secondary" data-testid="meeting-start">
                 Start meeting
               </Button>
             </form>

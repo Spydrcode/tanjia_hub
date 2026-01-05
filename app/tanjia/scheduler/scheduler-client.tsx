@@ -171,6 +171,7 @@ export default function SchedulerClient({ calLinks, defaultDuration, leadContext
             <iframe
               title="Scheduling"
               src={embedUrl}
+              data-testid="scheduler-embed"
               className="h-full w-full"
               allow="fullscreen"
               loading="lazy"

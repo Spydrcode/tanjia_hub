@@ -18,7 +18,7 @@ export default async function GroupsPage() {
 
   return (
     <PageShell maxWidth="xl">
-      <ZoneHeader zone="groups" title="Groups" anchor="Networking" question="Manage recurring groups and attendance." />
+      <ZoneHeader customBadge="Networking" title="Groups" anchor="Networking" question="Manage recurring groups and attendance." />
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -26,9 +26,9 @@ export default async function GroupsPage() {
           <Link href="/tanjia/groups?action=new" className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white">New Group</Link>
         </div>
 
-        <div className="grid gap-3">
+        <div className="grid gap-3" data-testid="groups-list">
           {(groups || []).map((g: any) => (
-            <div key={g.id} className="rounded-lg border p-3">
+            <div key={g.id} className="rounded-lg border p-3" data-testid="group-row" data-group-id={g.id}>
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-medium">{g.name}</div>

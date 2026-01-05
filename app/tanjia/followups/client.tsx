@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useTransition } from "react";
+import { usePathname } from "next/navigation";
 import { format } from "date-fns";
 import { Tabs } from "@/src/components/ui/tabs";
 import { Card, CardContent } from "@/src/components/ui/card";
@@ -31,6 +32,8 @@ const tabs = [
 ];
 
 export default function FollowupsClient({ followups, onMarkDone, onSnooze }: Props) {
+  const pathname = usePathname();
+  const basePath = pathname?.startsWith("/demo") ? "/demo" : "/tanjia";
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]["id"]>("due");
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -67,7 +70,7 @@ export default function FollowupsClient({ followups, onMarkDone, onSnooze }: Pro
   };
 
   return (
-    <Card className="border-white/70 bg-white/90 shadow-md ring-1 ring-neutral-100 backdrop-blur">
+    <Card className="border-white/70 bg-white/90 shadow-md ring-1 ring-neutral-100 backdrop-blur" data-testid="followups-list">
       <CardContent className="space-y-4 p-4">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-medium text-neutral-900">
@@ -84,7 +87,7 @@ export default function FollowupsClient({ followups, onMarkDone, onSnooze }: Pro
         ) : (
           <div className="space-y-3">
             {visible.map((item) => (
-              <div key={item.id} className="rounded-lg border border-neutral-200 bg-white p-3">
+              <div key={item.id} className="rounded-lg border border-neutral-200 bg-white p-3" data-testid="followup-row" data-followup-id={item.id}>
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex flex-col">
                     <p className="text-sm font-medium text-neutral-900">
@@ -106,6 +109,7 @@ export default function FollowupsClient({ followups, onMarkDone, onSnooze }: Pro
                       variant="secondary"
                       disabled={isPending && pendingId === item.id}
                       onClick={() => handleAction(item.id, "done")}
+                      data-testid="followup-mark-done"
                     >
                       Mark done
                     </Button>
@@ -114,11 +118,12 @@ export default function FollowupsClient({ followups, onMarkDone, onSnooze }: Pro
                       variant="ghost"
                       disabled={isPending && pendingId === item.id}
                       onClick={() => handleAction(item.id, "snooze")}
+                      data-testid="followup-reschedule"
                     >
                       Snooze +2 days
                     </Button>
                     <Button asChild size="sm" variant="ghost">
-                      <a href={`/tanjia/leads/${item.lead_id}`}>Open lead</a>
+                      <a href={`${basePath}/leads/${item.lead_id}`}>Open lead</a>
                     </Button>
                   </div>
                 ) : null}

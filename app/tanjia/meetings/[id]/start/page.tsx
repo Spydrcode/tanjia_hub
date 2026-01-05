@@ -65,7 +65,7 @@ export default async function MeetingStartPage({ params }: { params: { id: strin
         <Card>
           <CardContent className="space-y-4 p-4">
             <h2 className="text-sm font-semibold text-neutral-900">Add interaction</h2>
-            <form action={addAction} className="space-y-3">
+            <form action={addAction} className="space-y-3" data-testid="meeting-add-interaction">
               <div className="grid gap-3 sm:grid-cols-2">
                 <Input name="person_name" placeholder="Person" />
                 <Input name="company_name" placeholder="Company" />
@@ -90,8 +90,8 @@ export default async function MeetingStartPage({ params }: { params: { id: strin
                   </select>
                 </label>
               </div>
-              <Textarea name="notes" className="min-h-[120px]" placeholder="What was said, commitments, constraints" />
-              <Button type="submit">Save interaction</Button>
+              <Textarea name="notes" className="min-h-[120px]" placeholder="What was said, commitments, constraints" data-testid="meeting-interaction-input" />
+              <Button type="submit" data-testid="meeting-interaction-save">Save interaction</Button>
             </form>
           </CardContent>
         </Card>
@@ -118,7 +118,7 @@ export default async function MeetingStartPage({ params }: { params: { id: strin
           {interactions.length === 0 ? (
             <p className="text-sm text-neutral-600">No interactions logged yet.</p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3" data-testid="meeting-interactions-list">
               {interactions.map((i) => (
                 <InteractionRow key={i.id} interaction={i} meetingId={meeting.id} />
               ))}

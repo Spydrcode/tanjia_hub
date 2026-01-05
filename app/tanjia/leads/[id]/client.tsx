@@ -223,7 +223,7 @@ export default function LeadDetailClient({
   const modelPath = snapshotMeta?.models?.join(" · ");
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
+    <div className="grid gap-6 lg:grid-cols-[320px,1fr]" data-testid="lead-detail">
       <div className="space-y-4">
         <Card>
           <CardContent className="space-y-3 p-4">
@@ -426,7 +426,7 @@ export default function LeadDetailClient({
                           >
                             Shorten
                           </Button>
-                          <Button size="sm" variant="secondary" onClick={() => handleSaveDraft(draftTab, option)}>
+                          <Button size="sm" variant="secondary" onClick={() => handleSaveDraft(draftTab, option)} data-testid="lead-draft-save">
                             Save to Messages
                           </Button>
                         </div>
@@ -460,7 +460,7 @@ export default function LeadDetailClient({
                       <Button size="sm" variant="secondary" onClick={() => handleCopy(emailBody)} disabled={copying}>
                         Copy email
                       </Button>
-                      <Button size="sm" variant="secondary" onClick={() => handleSaveDraft("email", emailBody)}>
+                      <Button size="sm" variant="secondary" onClick={() => handleSaveDraft("email", emailBody)} data-testid="lead-draft-save">
                         Save to Messages
                       </Button>
                       <Button

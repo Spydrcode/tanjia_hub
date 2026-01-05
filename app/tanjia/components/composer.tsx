@@ -1,14 +1,16 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { MessageSquare, Flag, UserPlus, Video, Sparkles } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 
 export function Composer() {
   const router = useRouter();
+  const pathname = usePathname();
   const [text, setText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const basePath = pathname?.startsWith("/demo") ? "/demo" : "/tanjia";
 
   const handleAction = (action: string) => {
     if (!text.trim()) return;
@@ -20,16 +22,16 @@ export function Composer() {
     // Navigate based on action
     switch (action) {
       case "reply":
-        router.push("/tanjia/support?from=composer");
+        router.push(`${basePath}/support?from=composer`);
         break;
       case "followup":
-        router.push("/tanjia/followups?action=new&from=composer");
+        router.push(`${basePath}/followups?action=new&from=composer`);
         break;
       case "lead":
-        router.push("/tanjia/leads?action=new&from=composer");
+        router.push(`${basePath}/leads?action=new&from=composer`);
         break;
       case "meeting":
-        router.push("/tanjia/meetings?action=new&from=composer");
+        router.push(`${basePath}/meetings?action=new&from=composer`);
         break;
       default:
         break;
@@ -85,7 +87,8 @@ export function Composer() {
           onChange={(e) => setText(e.target.value)}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          placeholder="Paste a comment, a lead message, or call notes…"
+          placeholder="Paste a comment, a lead message, or call notes"
+          data-testid="today-quick-capture-input"
           className="w-full resize-none rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 outline-none transition focus:border-emerald-300 focus:bg-white focus:ring-2 focus:ring-emerald-100"
           rows={3}
         />
@@ -98,6 +101,7 @@ export function Composer() {
             key={action.id}
             onClick={() => handleAction(action.id)}
             disabled={!text.trim()}
+            data-testid={action.id === "reply" ? "today-action-draft-reply" : undefined}
             className={cn(
               "flex flex-col items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-center transition",
               text.trim()
